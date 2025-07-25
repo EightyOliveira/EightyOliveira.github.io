@@ -15,5 +15,12 @@
       <guid>https://eightyoliveira.github.io/posts/hello-hugo/</guid>
       <description>&lt;p&gt;这是我的第一篇文章！我正在学习 Hugo 😊&lt;/p&gt;</description>
     </item>
+    <item>
+      <title>Hello World</title>
+      <link>https://eightyoliveira.github.io/docs/hello/</link>
+      <pubDate>Sun, 20 Jul 2025 00:00:00 +0000</pubDate>
+      <guid>https://eightyoliveira.github.io/docs/hello/</guid>
+      <description>&lt;p&gt;test action trigger&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>

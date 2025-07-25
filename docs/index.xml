@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Docs on 我的博客</title>
+    <link>https://eightyoliveira.github.io/docs/</link>
+    <description>Recent content in Docs on 我的博客</description>
+    <generator>Hugo -- 0.148.1</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sun, 20 Jul 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://eightyoliveira.github.io/docs/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Hello World</title>
+      <link>https://eightyoliveira.github.io/docs/hello/</link>
+      <pubDate>Sun, 20 Jul 2025 00:00:00 +0000</pubDate>
+      <guid>https://eightyoliveira.github.io/docs/hello/</guid>
+      <description>&lt;p&gt;test action trigger&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
