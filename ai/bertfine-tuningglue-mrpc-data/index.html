@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>BERT微调GLUE MRPC数据集指南 | 我的博客</title>
+<meta name="keywords" content="">
+<meta name="description" content="BERT微调GLUE MRPC数据集指南
+1 env
+env:python=3.6 tensorflow=1.15.0
+model:google-bert uncased_L-12_H-768_A-12
+2 start_script
+python run_classifier.py 
+--task_name=MRPC 
+--do_train=true 
+--do_eval=true 
+--data_dir=..\bert\GLUE\glue_data\MRPC 
+--vocab_file=..\bert\GLUE\uncased_L-12_H-768_A-12\vocab.txt 
+--bert_config_file=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_config.json 
+--init_checkpoint=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_model.ckpt --max_seq_length=128 
+--train_batch_size=8 
+--learning_rate=2e-5 
+--num_train_epochs=3.0 
+--output_dir=..\bert\GLUE\mrpc_output
+3 code_analysis
+3.1 pre_data
+
+num_warmup_steps 是深度学习训练过程中一个非常重要的超参数，
+尤其是在使用像 BERT 这样的预训练模型时。
+它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。
+
+为什么需要学习率预热？
+1防止梯度爆炸或不稳定
+在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。
+通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。
+2提高收敛速度
+学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。
+如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。
+3BERT 模型的特殊性
+BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。
+因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。
+train_examples = None
+num_train_steps = None
+num_warmup_steps = None
+if FLAGS.do_train:
+    train_examples = processor.get_train_examples(FLAGS.data_dir)
+    num_train_steps = int(
+        len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
+    num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
+#input_ids通过将分词器分开的词，通过vocab_file替换为对应的id
+features[&#34;input_ids&#34;] = create_int_feature(feature.input_ids)
+#input_mask标记哪些是有效的token，哪些是padding
+#features[&#34;input_mask&#34;] = create_int_feature(feature.input_mask)
+用于区分输入中的不同句子或段落
+features[&#34;segment_ids&#34;] = create_int_feature(feature.segment_ids)
+#0或者1 
+features[&#34;label_ids&#34;] = create_int_feature([feature.label_id])
+3.2 create_model
+3.2.1 embedding
+token embedding层
+[8,128] -&gt; [8,128,768]
+[batch_size, seq_length] shape to [batch_size, seq_length, embedding_size].
+通过直接读取预训练好的embedding table，根据单个token转换为768维向量
+segment embedding层
+输出是[batch_size, seq_length] 
+二维的embedding，输出是[8,128]
+position embedding
+同上
+3.2.2 create_mask
+注意！这里的mask是padding mask，而不是transformer论文中的causal Mask
+def create_attention_mask_from_input_mask(from_tensor, to_mask):
+  &#34;&#34;&#34;Create 3D attention mask from a 2D tensor mask.
+
+  Args:
+    from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...].
+    to_mask: int32 Tensor of shape [batch_size, to_seq_length].
+
+  Returns:
+    float Tensor of shape [batch_size, from_seq_length, to_seq_length].
+  &#34;&#34;&#34;
+  from_shape = get_shape_list(from_tensor, expected_rank=[2, 3])
+  batch_size = from_shape[0] 8
+  from_seq_length = from_shape[1] 128
+
+  to_shape = get_shape_list(to_mask, expected_rank=2)
+  to_seq_length = to_shape[1] 8
+ 
+  to_mask = tf.cast(
+      tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32)
+    [8, 1, 128]
+  # We don&#39;t assume that `from_tensor` is a mask (although it could be). We
+  # don&#39;t actually care if we attend *from* padding tokens (only *to* padding)
+  # tokens so we create a tensor of all ones.
+  #
+  # `broadcast_ones` = [batch_size, from_seq_length, 1]
+  broadcast_ones = tf.ones(
+      shape=[batch_size, from_seq_length, 1], dtype=tf.float32)
+
+  # Here we broadcast along two dimensions to create the mask.
+  mask = broadcast_ones * to_mask
+ [8, 128, 128]
+
+  return mask
+to_mask = [
+    [1, 1, 1, 0],  # 第一个样本：前 3 个位置有效，第 4 个位置是填充
+    [1, 1, 0, 0]   # 第二个样本：前 2 个位置有效，后 2 个位置是填充
+]
+mask = [
+    [
+        [1, 1, 1, 0],  # 第一个样本，第一个位置可以关注前 3 个位置
+        [1, 1, 1, 0],  # 第一个样本，第二个位置可以关注前 3 个位置
+        [1, 1, 1, 0],  # 第一个样本，第三个位置可以关注前 3 个位置
+        [0, 0, 0, 0]   # 第一个样本，第四个位置是填充，不能关注任何位置
+    ],
+    [
+        [1, 1, 0, 0],  # 第二个样本，第一个位置可以关注前 2 个位置
+        [1, 1, 0, 0],  # 第二个样本，第二个位置可以关注前 2 个位置
+        [0, 0, 0, 0],  # 第二个样本，第三个位置是填充，不能关注任何位置
+        [0, 0, 0, 0]   # 第二个样本，第四个位置是填充，不能关注任何位置
+    ]
+]
+3.2.3 qkv
+  &#34;&#34;&#34;Multi-headed, multi-layer Transformer from &#34;Attention is All You Need&#34;.
+
+  This is almost an exact implementation of the original Transformer encoder.
+
+  See the original paper:
+  https://arxiv.org/abs/1706.03762
+
+  Also see:
+  https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py
+
+  Args:
+      [8,128,768] 实际参数
+    input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size].
+      [8,128,128]
+    attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length,
+      seq_length], with 1 for positions that can be attended to and 0 in
+      positions that should not be.
+        768
+    hidden_size: int. Hidden size of the Transformer.
+
+      default 12 多层self_attention
+    num_hidden_layers: int. Number of layers (blocks) in the Transformer.
+
+      default 12
+    num_attention_heads: int. Number of attention heads in the Transformer.
+
+    
+    intermediate_size: int. The size of the &#34;intermediate&#34; (a.k.a., feed
+      forward) layer.
+    intermediate_act_fn: function. The non-linear activation function to apply
+      to the output of the intermediate/feed-forward layer.
+    hidden_dropout_prob: float. Dropout probability for the hidden layers.
+    attention_probs_dropout_prob: float. Dropout probability of the attention
+      probabilities.
+    initializer_range: float. Range of the initializer (stddev of truncated
+      normal).
+    do_return_all_layers: Whether to also return all layers or just the final
+      layer.
+
+  Returns:
+    float Tensor of shape [batch_size, seq_length, hidden_size], the final
+    hidden layer of the Transformer.
+
+  Raises:
+    ValueError: A Tensor shape or parameter is invalid.
+  &#34;&#34;&#34;
+12的倍数，所以768，每个头64个特征
+
+if hidden_size % num_attention_heads != 0:
+    raise ValueError(
+        &#34;The hidden size (%d) is not a multiple of the number of attention &#34;
+        &#34;heads (%d)&#34; % (hidden_size, num_attention_heads))
+
+  attention_head_size = int(hidden_size / num_attention_heads)
+  input_shape = get_shape_list(input_tensor, expected_rank=3)
+  batch_size = input_shape[0]
+  seq_length = input_shape[1]
+  input_width = input_shape[2]
+
+  # The Transformer performs sum residuals on all layers so the input needs
+  # to be the same as the hidden size.
+  if input_width != hidden_size:
+    raise ValueError(&#34;The width of the input tensor (%d) != hidden size (%d)&#34; %
+                     (input_width, hidden_size))
+  # We keep the representation as a 2D tensor to avoid re-shaping it back and
+  # forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on
+  # the GPU/CPU but may not be free on the TPU, so we want to minimize them to
+  # help the optimizer.
+  prev_output = reshape_to_matrix(input_tensor) [1024,768]
+  # Scalar dimensions referenced here:
+  #   B = batch size (number of sequences) 8
+  #   F = `from_tensor` sequence length 128
+  #   T = `to_tensor` sequence length 128
+  #   N = `num_attention_heads` 12
+  #   H = `size_per_head` 64
+对于每个词，都构建出对应特征向量，12个头，每个头64特征
+  # `query_layer` = [B*F, N*H] [1024,768] 
+
+  # `key_layer` = [B*T, N*H]
+
+  # `value_layer` = [B*T, N*H]
+在softmax之前，scores算出来之前，将后面的遮蔽
+if attention_mask is not None:
+    # `attention_mask` = [B, 1, F, T]
+    attention_mask = tf.expand_dims(attention_mask, axis=[1])
+
+    # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
+    # masked positions, this operation will create a tensor which is 0.0 for
+    # positions we want to attend and -10000.0 for masked positions.
+    adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0
+3.2.4 feed forward &amp; dropout &amp; layer normalize">
+<meta name="author" content="">
+<link rel="canonical" href="https://eightyoliveira.github.io/ai/bertfine-tuningglue-mrpc-data/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://eightyoliveira.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://eightyoliveira.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://eightyoliveira.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://eightyoliveira.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://eightyoliveira.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/ai/bertfine-tuningglue-mrpc-data/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://eightyoliveira.github.io/ai/bertfine-tuningglue-mrpc-data/">
+  <meta property="og:site_name" content="我的博客">
+  <meta property="og:title" content="BERT微调GLUE MRPC数据集指南">
+  <meta property="og:description" content="BERT微调GLUE MRPC数据集指南 1 env env:python=3.6 tensorflow=1.15.0
+model:google-bert uncased_L-12_H-768_A-12
+2 start_script python run_classifier.py --task_name=MRPC --do_train=true --do_eval=true --data_dir=..\bert\GLUE\glue_data\MRPC --vocab_file=..\bert\GLUE\uncased_L-12_H-768_A-12\vocab.txt --bert_config_file=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_config.json --init_checkpoint=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_model.ckpt --max_seq_length=128 --train_batch_size=8 --learning_rate=2e-5 --num_train_epochs=3.0 --output_dir=..\bert\GLUE\mrpc_output 3 code_analysis 3.1 pre_data num_warmup_steps 是深度学习训练过程中一个非常重要的超参数， 尤其是在使用像 BERT 这样的预训练模型时。 它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。 为什么需要学习率预热？ 1防止梯度爆炸或不稳定 在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。 通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。 2提高收敛速度 学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。 如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。 3BERT 模型的特殊性 BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。 因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。 train_examples = None num_train_steps = None num_warmup_steps = None if FLAGS.do_train: train_examples = processor.get_train_examples(FLAGS.data_dir) num_train_steps = int( len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs) num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion) #input_ids通过将分词器分开的词，通过vocab_file替换为对应的id features[&#34;input_ids&#34;] = create_int_feature(feature.input_ids) #input_mask标记哪些是有效的token，哪些是padding #features[&#34;input_mask&#34;] = create_int_feature(feature.input_mask) 用于区分输入中的不同句子或段落 features[&#34;segment_ids&#34;] = create_int_feature(feature.segment_ids) #0或者1 features[&#34;label_ids&#34;] = create_int_feature([feature.label_id]) 3.2 create_model 3.2.1 embedding token embedding层 [8,128] -&gt; [8,128,768] [batch_size, seq_length] shape to [batch_size, seq_length, embedding_size]. 通过直接读取预训练好的embedding table，根据单个token转换为768维向量 segment embedding层 输出是[batch_size, seq_length] 二维的embedding，输出是[8,128] position embedding 同上 3.2.2 create_mask 注意！这里的mask是padding mask，而不是transformer论文中的causal Mask def create_attention_mask_from_input_mask(from_tensor, to_mask): &#34;&#34;&#34;Create 3D attention mask from a 2D tensor mask. Args: from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...]. to_mask: int32 Tensor of shape [batch_size, to_seq_length]. Returns: float Tensor of shape [batch_size, from_seq_length, to_seq_length]. &#34;&#34;&#34; from_shape = get_shape_list(from_tensor, expected_rank=[2, 3]) batch_size = from_shape[0] 8 from_seq_length = from_shape[1] 128 to_shape = get_shape_list(to_mask, expected_rank=2) to_seq_length = to_shape[1] 8 to_mask = tf.cast( tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32) [8, 1, 128] # We don&#39;t assume that `from_tensor` is a mask (although it could be). We # don&#39;t actually care if we attend *from* padding tokens (only *to* padding) # tokens so we create a tensor of all ones. # # `broadcast_ones` = [batch_size, from_seq_length, 1] broadcast_ones = tf.ones( shape=[batch_size, from_seq_length, 1], dtype=tf.float32) # Here we broadcast along two dimensions to create the mask. mask = broadcast_ones * to_mask [8, 128, 128] return mask to_mask = [ [1, 1, 1, 0], # 第一个样本：前 3 个位置有效，第 4 个位置是填充 [1, 1, 0, 0] # 第二个样本：前 2 个位置有效，后 2 个位置是填充 ] mask = [ [ [1, 1, 1, 0], # 第一个样本，第一个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第二个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第三个位置可以关注前 3 个位置 [0, 0, 0, 0] # 第一个样本，第四个位置是填充，不能关注任何位置 ], [ [1, 1, 0, 0], # 第二个样本，第一个位置可以关注前 2 个位置 [1, 1, 0, 0], # 第二个样本，第二个位置可以关注前 2 个位置 [0, 0, 0, 0], # 第二个样本，第三个位置是填充，不能关注任何位置 [0, 0, 0, 0] # 第二个样本，第四个位置是填充，不能关注任何位置 ] ] 3.2.3 qkv &#34;&#34;&#34;Multi-headed, multi-layer Transformer from &#34;Attention is All You Need&#34;. This is almost an exact implementation of the original Transformer encoder. See the original paper: https://arxiv.org/abs/1706.03762 Also see: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py Args: [8,128,768] 实际参数 input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size]. [8,128,128] attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length, seq_length], with 1 for positions that can be attended to and 0 in positions that should not be. 768 hidden_size: int. Hidden size of the Transformer. default 12 多层self_attention num_hidden_layers: int. Number of layers (blocks) in the Transformer. default 12 num_attention_heads: int. Number of attention heads in the Transformer. intermediate_size: int. The size of the &#34;intermediate&#34; (a.k.a., feed forward) layer. intermediate_act_fn: function. The non-linear activation function to apply to the output of the intermediate/feed-forward layer. hidden_dropout_prob: float. Dropout probability for the hidden layers. attention_probs_dropout_prob: float. Dropout probability of the attention probabilities. initializer_range: float. Range of the initializer (stddev of truncated normal). do_return_all_layers: Whether to also return all layers or just the final layer. Returns: float Tensor of shape [batch_size, seq_length, hidden_size], the final hidden layer of the Transformer. Raises: ValueError: A Tensor shape or parameter is invalid. &#34;&#34;&#34; 12的倍数，所以768，每个头64个特征 if hidden_size % num_attention_heads != 0: raise ValueError( &#34;The hidden size (%d) is not a multiple of the number of attention &#34; &#34;heads (%d)&#34; % (hidden_size, num_attention_heads)) attention_head_size = int(hidden_size / num_attention_heads) input_shape = get_shape_list(input_tensor, expected_rank=3) batch_size = input_shape[0] seq_length = input_shape[1] input_width = input_shape[2] # The Transformer performs sum residuals on all layers so the input needs # to be the same as the hidden size. if input_width != hidden_size: raise ValueError(&#34;The width of the input tensor (%d) != hidden size (%d)&#34; % (input_width, hidden_size)) # We keep the representation as a 2D tensor to avoid re-shaping it back and # forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on # the GPU/CPU but may not be free on the TPU, so we want to minimize them to # help the optimizer. prev_output = reshape_to_matrix(input_tensor) [1024,768] # Scalar dimensions referenced here: # B = batch size (number of sequences) 8 # F = `from_tensor` sequence length 128 # T = `to_tensor` sequence length 128 # N = `num_attention_heads` 12 # H = `size_per_head` 64 对于每个词，都构建出对应特征向量，12个头，每个头64特征 # `query_layer` = [B*F, N*H] [1024,768] # `key_layer` = [B*T, N*H] # `value_layer` = [B*T, N*H] 在softmax之前，scores算出来之前，将后面的遮蔽 if attention_mask is not None: # `attention_mask` = [B, 1, F, T] attention_mask = tf.expand_dims(attention_mask, axis=[1]) # Since attention_mask is 1.0 for positions we want to attend and 0.0 for # masked positions, this operation will create a tensor which is 0.0 for # positions we want to attend and -10000.0 for masked positions. adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0 3.2.4 feed forward &amp; dropout &amp; layer normalize">
+  <meta property="og:locale" content="zh-cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="ai">
+    <meta property="article:published_time" content="2025-04-19T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-04-19T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BERT微调GLUE MRPC数据集指南">
+<meta name="twitter:description" content="BERT微调GLUE MRPC数据集指南
+1 env
+env:python=3.6 tensorflow=1.15.0
+model:google-bert uncased_L-12_H-768_A-12
+2 start_script
+python run_classifier.py 
+--task_name=MRPC 
+--do_train=true 
+--do_eval=true 
+--data_dir=..\bert\GLUE\glue_data\MRPC 
+--vocab_file=..\bert\GLUE\uncased_L-12_H-768_A-12\vocab.txt 
+--bert_config_file=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_config.json 
+--init_checkpoint=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_model.ckpt --max_seq_length=128 
+--train_batch_size=8 
+--learning_rate=2e-5 
+--num_train_epochs=3.0 
+--output_dir=..\bert\GLUE\mrpc_output
+3 code_analysis
+3.1 pre_data
+
+num_warmup_steps 是深度学习训练过程中一个非常重要的超参数，
+尤其是在使用像 BERT 这样的预训练模型时。
+它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。
+
+为什么需要学习率预热？
+1防止梯度爆炸或不稳定
+在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。
+通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。
+2提高收敛速度
+学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。
+如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。
+3BERT 模型的特殊性
+BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。
+因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。
+train_examples = None
+num_train_steps = None
+num_warmup_steps = None
+if FLAGS.do_train:
+    train_examples = processor.get_train_examples(FLAGS.data_dir)
+    num_train_steps = int(
+        len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
+    num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
+#input_ids通过将分词器分开的词，通过vocab_file替换为对应的id
+features[&#34;input_ids&#34;] = create_int_feature(feature.input_ids)
+#input_mask标记哪些是有效的token，哪些是padding
+#features[&#34;input_mask&#34;] = create_int_feature(feature.input_mask)
+用于区分输入中的不同句子或段落
+features[&#34;segment_ids&#34;] = create_int_feature(feature.segment_ids)
+#0或者1 
+features[&#34;label_ids&#34;] = create_int_feature([feature.label_id])
+3.2 create_model
+3.2.1 embedding
+token embedding层
+[8,128] -&gt; [8,128,768]
+[batch_size, seq_length] shape to [batch_size, seq_length, embedding_size].
+通过直接读取预训练好的embedding table，根据单个token转换为768维向量
+segment embedding层
+输出是[batch_size, seq_length] 
+二维的embedding，输出是[8,128]
+position embedding
+同上
+3.2.2 create_mask
+注意！这里的mask是padding mask，而不是transformer论文中的causal Mask
+def create_attention_mask_from_input_mask(from_tensor, to_mask):
+  &#34;&#34;&#34;Create 3D attention mask from a 2D tensor mask.
+
+  Args:
+    from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...].
+    to_mask: int32 Tensor of shape [batch_size, to_seq_length].
+
+  Returns:
+    float Tensor of shape [batch_size, from_seq_length, to_seq_length].
+  &#34;&#34;&#34;
+  from_shape = get_shape_list(from_tensor, expected_rank=[2, 3])
+  batch_size = from_shape[0] 8
+  from_seq_length = from_shape[1] 128
+
+  to_shape = get_shape_list(to_mask, expected_rank=2)
+  to_seq_length = to_shape[1] 8
+ 
+  to_mask = tf.cast(
+      tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32)
+    [8, 1, 128]
+  # We don&#39;t assume that `from_tensor` is a mask (although it could be). We
+  # don&#39;t actually care if we attend *from* padding tokens (only *to* padding)
+  # tokens so we create a tensor of all ones.
+  #
+  # `broadcast_ones` = [batch_size, from_seq_length, 1]
+  broadcast_ones = tf.ones(
+      shape=[batch_size, from_seq_length, 1], dtype=tf.float32)
+
+  # Here we broadcast along two dimensions to create the mask.
+  mask = broadcast_ones * to_mask
+ [8, 128, 128]
+
+  return mask
+to_mask = [
+    [1, 1, 1, 0],  # 第一个样本：前 3 个位置有效，第 4 个位置是填充
+    [1, 1, 0, 0]   # 第二个样本：前 2 个位置有效，后 2 个位置是填充
+]
+mask = [
+    [
+        [1, 1, 1, 0],  # 第一个样本，第一个位置可以关注前 3 个位置
+        [1, 1, 1, 0],  # 第一个样本，第二个位置可以关注前 3 个位置
+        [1, 1, 1, 0],  # 第一个样本，第三个位置可以关注前 3 个位置
+        [0, 0, 0, 0]   # 第一个样本，第四个位置是填充，不能关注任何位置
+    ],
+    [
+        [1, 1, 0, 0],  # 第二个样本，第一个位置可以关注前 2 个位置
+        [1, 1, 0, 0],  # 第二个样本，第二个位置可以关注前 2 个位置
+        [0, 0, 0, 0],  # 第二个样本，第三个位置是填充，不能关注任何位置
+        [0, 0, 0, 0]   # 第二个样本，第四个位置是填充，不能关注任何位置
+    ]
+]
+3.2.3 qkv
+  &#34;&#34;&#34;Multi-headed, multi-layer Transformer from &#34;Attention is All You Need&#34;.
+
+  This is almost an exact implementation of the original Transformer encoder.
+
+  See the original paper:
+  https://arxiv.org/abs/1706.03762
+
+  Also see:
+  https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py
+
+  Args:
+      [8,128,768] 实际参数
+    input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size].
+      [8,128,128]
+    attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length,
+      seq_length], with 1 for positions that can be attended to and 0 in
+      positions that should not be.
+        768
+    hidden_size: int. Hidden size of the Transformer.
+
+      default 12 多层self_attention
+    num_hidden_layers: int. Number of layers (blocks) in the Transformer.
+
+      default 12
+    num_attention_heads: int. Number of attention heads in the Transformer.
+
+    
+    intermediate_size: int. The size of the &#34;intermediate&#34; (a.k.a., feed
+      forward) layer.
+    intermediate_act_fn: function. The non-linear activation function to apply
+      to the output of the intermediate/feed-forward layer.
+    hidden_dropout_prob: float. Dropout probability for the hidden layers.
+    attention_probs_dropout_prob: float. Dropout probability of the attention
+      probabilities.
+    initializer_range: float. Range of the initializer (stddev of truncated
+      normal).
+    do_return_all_layers: Whether to also return all layers or just the final
+      layer.
+
+  Returns:
+    float Tensor of shape [batch_size, seq_length, hidden_size], the final
+    hidden layer of the Transformer.
+
+  Raises:
+    ValueError: A Tensor shape or parameter is invalid.
+  &#34;&#34;&#34;
+12的倍数，所以768，每个头64个特征
+
+if hidden_size % num_attention_heads != 0:
+    raise ValueError(
+        &#34;The hidden size (%d) is not a multiple of the number of attention &#34;
+        &#34;heads (%d)&#34; % (hidden_size, num_attention_heads))
+
+  attention_head_size = int(hidden_size / num_attention_heads)
+  input_shape = get_shape_list(input_tensor, expected_rank=3)
+  batch_size = input_shape[0]
+  seq_length = input_shape[1]
+  input_width = input_shape[2]
+
+  # The Transformer performs sum residuals on all layers so the input needs
+  # to be the same as the hidden size.
+  if input_width != hidden_size:
+    raise ValueError(&#34;The width of the input tensor (%d) != hidden size (%d)&#34; %
+                     (input_width, hidden_size))
+  # We keep the representation as a 2D tensor to avoid re-shaping it back and
+  # forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on
+  # the GPU/CPU but may not be free on the TPU, so we want to minimize them to
+  # help the optimizer.
+  prev_output = reshape_to_matrix(input_tensor) [1024,768]
+  # Scalar dimensions referenced here:
+  #   B = batch size (number of sequences) 8
+  #   F = `from_tensor` sequence length 128
+  #   T = `to_tensor` sequence length 128
+  #   N = `num_attention_heads` 12
+  #   H = `size_per_head` 64
+对于每个词，都构建出对应特征向量，12个头，每个头64特征
+  # `query_layer` = [B*F, N*H] [1024,768] 
+
+  # `key_layer` = [B*T, N*H]
+
+  # `value_layer` = [B*T, N*H]
+在softmax之前，scores算出来之前，将后面的遮蔽
+if attention_mask is not None:
+    # `attention_mask` = [B, 1, F, T]
+    attention_mask = tf.expand_dims(attention_mask, axis=[1])
+
+    # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
+    # masked positions, this operation will create a tensor which is 0.0 for
+    # positions we want to attend and -10000.0 for masked positions.
+    adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0
+3.2.4 feed forward &amp; dropout &amp; layer normalize">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Ais",
+      "item": "https://eightyoliveira.github.io/ai/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "BERT微调GLUE MRPC数据集指南",
+      "item": "https://eightyoliveira.github.io/ai/bertfine-tuningglue-mrpc-data/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "BERT微调GLUE MRPC数据集指南",
+  "name": "BERT微调GLUE MRPC数据集指南",
+  "description": "BERT微调GLUE MRPC数据集指南 1 env env:python=3.6 tensorflow=1.15.0\nmodel:google-bert uncased_L-12_H-768_A-12\n2 start_script python run_classifier.py --task_name=MRPC --do_train=true --do_eval=true --data_dir=..\\bert\\GLUE\\glue_data\\MRPC --vocab_file=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\vocab.txt --bert_config_file=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\bert_config.json --init_checkpoint=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\bert_model.ckpt --max_seq_length=128 --train_batch_size=8 --learning_rate=2e-5 --num_train_epochs=3.0 --output_dir=..\\bert\\GLUE\\mrpc_output 3 code_analysis 3.1 pre_data num_warmup_steps 是深度学习训练过程中一个非常重要的超参数， 尤其是在使用像 BERT 这样的预训练模型时。 它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。 为什么需要学习率预热？ 1防止梯度爆炸或不稳定 在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。 通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。 2提高收敛速度 学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。 如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。 3BERT 模型的特殊性 BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。 因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。 train_examples = None num_train_steps = None num_warmup_steps = None if FLAGS.do_train: train_examples = processor.get_train_examples(FLAGS.data_dir) num_train_steps = int( len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs) num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion) #input_ids通过将分词器分开的词，通过vocab_file替换为对应的id features[\u0026#34;input_ids\u0026#34;] = create_int_feature(feature.input_ids) #input_mask标记哪些是有效的token，哪些是padding #features[\u0026#34;input_mask\u0026#34;] = create_int_feature(feature.input_mask) 用于区分输入中的不同句子或段落 features[\u0026#34;segment_ids\u0026#34;] = create_int_feature(feature.segment_ids) #0或者1 features[\u0026#34;label_ids\u0026#34;] = create_int_feature([feature.label_id]) 3.2 create_model 3.2.1 embedding token embedding层 [8,128] -\u0026gt; [8,128,768] [batch_size, seq_length] shape to [batch_size, seq_length, embedding_size]. 通过直接读取预训练好的embedding table，根据单个token转换为768维向量 segment embedding层 输出是[batch_size, seq_length] 二维的embedding，输出是[8,128] position embedding 同上 3.2.2 create_mask 注意！这里的mask是padding mask，而不是transformer论文中的causal Mask def create_attention_mask_from_input_mask(from_tensor, to_mask): \u0026#34;\u0026#34;\u0026#34;Create 3D attention mask from a 2D tensor mask. Args: from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...]. to_mask: int32 Tensor of shape [batch_size, to_seq_length]. Returns: float Tensor of shape [batch_size, from_seq_length, to_seq_length]. \u0026#34;\u0026#34;\u0026#34; from_shape = get_shape_list(from_tensor, expected_rank=[2, 3]) batch_size = from_shape[0] 8 from_seq_length = from_shape[1] 128 to_shape = get_shape_list(to_mask, expected_rank=2) to_seq_length = to_shape[1] 8 to_mask = tf.cast( tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32) [8, 1, 128] # We don\u0026#39;t assume that `from_tensor` is a mask (although it could be). We # don\u0026#39;t actually care if we attend *from* padding tokens (only *to* padding) # tokens so we create a tensor of all ones. # # `broadcast_ones` = [batch_size, from_seq_length, 1] broadcast_ones = tf.ones( shape=[batch_size, from_seq_length, 1], dtype=tf.float32) # Here we broadcast along two dimensions to create the mask. mask = broadcast_ones * to_mask [8, 128, 128] return mask to_mask = [ [1, 1, 1, 0], # 第一个样本：前 3 个位置有效，第 4 个位置是填充 [1, 1, 0, 0] # 第二个样本：前 2 个位置有效，后 2 个位置是填充 ] mask = [ [ [1, 1, 1, 0], # 第一个样本，第一个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第二个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第三个位置可以关注前 3 个位置 [0, 0, 0, 0] # 第一个样本，第四个位置是填充，不能关注任何位置 ], [ [1, 1, 0, 0], # 第二个样本，第一个位置可以关注前 2 个位置 [1, 1, 0, 0], # 第二个样本，第二个位置可以关注前 2 个位置 [0, 0, 0, 0], # 第二个样本，第三个位置是填充，不能关注任何位置 [0, 0, 0, 0] # 第二个样本，第四个位置是填充，不能关注任何位置 ] ] 3.2.3 qkv \u0026#34;\u0026#34;\u0026#34;Multi-headed, multi-layer Transformer from \u0026#34;Attention is All You Need\u0026#34;. This is almost an exact implementation of the original Transformer encoder. See the original paper: https://arxiv.org/abs/1706.03762 Also see: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py Args: [8,128,768] 实际参数 input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size]. [8,128,128] attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length, seq_length], with 1 for positions that can be attended to and 0 in positions that should not be. 768 hidden_size: int. Hidden size of the Transformer. default 12 多层self_attention num_hidden_layers: int. Number of layers (blocks) in the Transformer. default 12 num_attention_heads: int. Number of attention heads in the Transformer. intermediate_size: int. The size of the \u0026#34;intermediate\u0026#34; (a.k.a., feed forward) layer. intermediate_act_fn: function. The non-linear activation function to apply to the output of the intermediate/feed-forward layer. hidden_dropout_prob: float. Dropout probability for the hidden layers. attention_probs_dropout_prob: float. Dropout probability of the attention probabilities. initializer_range: float. Range of the initializer (stddev of truncated normal). do_return_all_layers: Whether to also return all layers or just the final layer. Returns: float Tensor of shape [batch_size, seq_length, hidden_size], the final hidden layer of the Transformer. Raises: ValueError: A Tensor shape or parameter is invalid. \u0026#34;\u0026#34;\u0026#34; 12的倍数，所以768，每个头64个特征 if hidden_size % num_attention_heads != 0: raise ValueError( \u0026#34;The hidden size (%d) is not a multiple of the number of attention \u0026#34; \u0026#34;heads (%d)\u0026#34; % (hidden_size, num_attention_heads)) attention_head_size = int(hidden_size / num_attention_heads) input_shape = get_shape_list(input_tensor, expected_rank=3) batch_size = input_shape[0] seq_length = input_shape[1] input_width = input_shape[2] # The Transformer performs sum residuals on all layers so the input needs # to be the same as the hidden size. if input_width != hidden_size: raise ValueError(\u0026#34;The width of the input tensor (%d) != hidden size (%d)\u0026#34; % (input_width, hidden_size)) # We keep the representation as a 2D tensor to avoid re-shaping it back and # forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on # the GPU/CPU but may not be free on the TPU, so we want to minimize them to # help the optimizer. prev_output = reshape_to_matrix(input_tensor) [1024,768] # Scalar dimensions referenced here: # B = batch size (number of sequences) 8 # F = `from_tensor` sequence length 128 # T = `to_tensor` sequence length 128 # N = `num_attention_heads` 12 # H = `size_per_head` 64 对于每个词，都构建出对应特征向量，12个头，每个头64特征 # `query_layer` = [B*F, N*H] [1024,768] # `key_layer` = [B*T, N*H] # `value_layer` = [B*T, N*H] 在softmax之前，scores算出来之前，将后面的遮蔽 if attention_mask is not None: # `attention_mask` = [B, 1, F, T] attention_mask = tf.expand_dims(attention_mask, axis=[1]) # Since attention_mask is 1.0 for positions we want to attend and 0.0 for # masked positions, this operation will create a tensor which is 0.0 for # positions we want to attend and -10000.0 for masked positions. adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0 3.2.4 feed forward \u0026amp; dropout \u0026amp; layer normalize\n",
+  "keywords": [
+    
+  ],
+  "articleBody": "BERT微调GLUE MRPC数据集指南 1 env env:python=3.6 tensorflow=1.15.0\nmodel:google-bert uncased_L-12_H-768_A-12\n2 start_script python run_classifier.py --task_name=MRPC --do_train=true --do_eval=true --data_dir=..\\bert\\GLUE\\glue_data\\MRPC --vocab_file=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\vocab.txt --bert_config_file=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\bert_config.json --init_checkpoint=..\\bert\\GLUE\\uncased_L-12_H-768_A-12\\bert_model.ckpt --max_seq_length=128 --train_batch_size=8 --learning_rate=2e-5 --num_train_epochs=3.0 --output_dir=..\\bert\\GLUE\\mrpc_output 3 code_analysis 3.1 pre_data num_warmup_steps 是深度学习训练过程中一个非常重要的超参数， 尤其是在使用像 BERT 这样的预训练模型时。 它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。 为什么需要学习率预热？ 1防止梯度爆炸或不稳定 在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。 通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。 2提高收敛速度 学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。 如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。 3BERT 模型的特殊性 BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。 因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。 train_examples = None num_train_steps = None num_warmup_steps = None if FLAGS.do_train: train_examples = processor.get_train_examples(FLAGS.data_dir) num_train_steps = int( len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs) num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion) #input_ids通过将分词器分开的词，通过vocab_file替换为对应的id features[\"input_ids\"] = create_int_feature(feature.input_ids) #input_mask标记哪些是有效的token，哪些是padding #features[\"input_mask\"] = create_int_feature(feature.input_mask) 用于区分输入中的不同句子或段落 features[\"segment_ids\"] = create_int_feature(feature.segment_ids) #0或者1 features[\"label_ids\"] = create_int_feature([feature.label_id]) 3.2 create_model 3.2.1 embedding token embedding层 [8,128] -\u003e [8,128,768] [batch_size, seq_length] shape to [batch_size, seq_length, embedding_size]. 通过直接读取预训练好的embedding table，根据单个token转换为768维向量 segment embedding层 输出是[batch_size, seq_length] 二维的embedding，输出是[8,128] position embedding 同上 3.2.2 create_mask 注意！这里的mask是padding mask，而不是transformer论文中的causal Mask def create_attention_mask_from_input_mask(from_tensor, to_mask): \"\"\"Create 3D attention mask from a 2D tensor mask. Args: from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...]. to_mask: int32 Tensor of shape [batch_size, to_seq_length]. Returns: float Tensor of shape [batch_size, from_seq_length, to_seq_length]. \"\"\" from_shape = get_shape_list(from_tensor, expected_rank=[2, 3]) batch_size = from_shape[0] 8 from_seq_length = from_shape[1] 128 to_shape = get_shape_list(to_mask, expected_rank=2) to_seq_length = to_shape[1] 8 to_mask = tf.cast( tf.reshape(to_mask, [batch_size, 1, to_seq_length]), tf.float32) [8, 1, 128] # We don't assume that `from_tensor` is a mask (although it could be). We # don't actually care if we attend *from* padding tokens (only *to* padding) # tokens so we create a tensor of all ones. # # `broadcast_ones` = [batch_size, from_seq_length, 1] broadcast_ones = tf.ones( shape=[batch_size, from_seq_length, 1], dtype=tf.float32) # Here we broadcast along two dimensions to create the mask. mask = broadcast_ones * to_mask [8, 128, 128] return mask to_mask = [ [1, 1, 1, 0], # 第一个样本：前 3 个位置有效，第 4 个位置是填充 [1, 1, 0, 0] # 第二个样本：前 2 个位置有效，后 2 个位置是填充 ] mask = [ [ [1, 1, 1, 0], # 第一个样本，第一个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第二个位置可以关注前 3 个位置 [1, 1, 1, 0], # 第一个样本，第三个位置可以关注前 3 个位置 [0, 0, 0, 0] # 第一个样本，第四个位置是填充，不能关注任何位置 ], [ [1, 1, 0, 0], # 第二个样本，第一个位置可以关注前 2 个位置 [1, 1, 0, 0], # 第二个样本，第二个位置可以关注前 2 个位置 [0, 0, 0, 0], # 第二个样本，第三个位置是填充，不能关注任何位置 [0, 0, 0, 0] # 第二个样本，第四个位置是填充，不能关注任何位置 ] ] 3.2.3 qkv \"\"\"Multi-headed, multi-layer Transformer from \"Attention is All You Need\". This is almost an exact implementation of the original Transformer encoder. See the original paper: https://arxiv.org/abs/1706.03762 Also see: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py Args: [8,128,768] 实际参数 input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size]. [8,128,128] attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length, seq_length], with 1 for positions that can be attended to and 0 in positions that should not be. 768 hidden_size: int. Hidden size of the Transformer. default 12 多层self_attention num_hidden_layers: int. Number of layers (blocks) in the Transformer. default 12 num_attention_heads: int. Number of attention heads in the Transformer. intermediate_size: int. The size of the \"intermediate\" (a.k.a., feed forward) layer. intermediate_act_fn: function. The non-linear activation function to apply to the output of the intermediate/feed-forward layer. hidden_dropout_prob: float. Dropout probability for the hidden layers. attention_probs_dropout_prob: float. Dropout probability of the attention probabilities. initializer_range: float. Range of the initializer (stddev of truncated normal). do_return_all_layers: Whether to also return all layers or just the final layer. Returns: float Tensor of shape [batch_size, seq_length, hidden_size], the final hidden layer of the Transformer. Raises: ValueError: A Tensor shape or parameter is invalid. \"\"\" 12的倍数，所以768，每个头64个特征 if hidden_size % num_attention_heads != 0: raise ValueError( \"The hidden size (%d) is not a multiple of the number of attention \" \"heads (%d)\" % (hidden_size, num_attention_heads)) attention_head_size = int(hidden_size / num_attention_heads) input_shape = get_shape_list(input_tensor, expected_rank=3) batch_size = input_shape[0] seq_length = input_shape[1] input_width = input_shape[2] # The Transformer performs sum residuals on all layers so the input needs # to be the same as the hidden size. if input_width != hidden_size: raise ValueError(\"The width of the input tensor (%d) != hidden size (%d)\" % (input_width, hidden_size)) # We keep the representation as a 2D tensor to avoid re-shaping it back and # forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on # the GPU/CPU but may not be free on the TPU, so we want to minimize them to # help the optimizer. prev_output = reshape_to_matrix(input_tensor) [1024,768] # Scalar dimensions referenced here: # B = batch size (number of sequences) 8 # F = `from_tensor` sequence length 128 # T = `to_tensor` sequence length 128 # N = `num_attention_heads` 12 # H = `size_per_head` 64 对于每个词，都构建出对应特征向量，12个头，每个头64特征 # `query_layer` = [B*F, N*H] [1024,768] # `key_layer` = [B*T, N*H] # `value_layer` = [B*T, N*H] 在softmax之前，scores算出来之前，将后面的遮蔽 if attention_mask is not None: # `attention_mask` = [B, 1, F, T] attention_mask = tf.expand_dims(attention_mask, axis=[1]) # Since attention_mask is 1.0 for positions we want to attend and 0.0 for # masked positions, this operation will create a tensor which is 0.0 for # positions we want to attend and -10000.0 for masked positions. adder = (1.0 - tf.cast(attention_mask, tf.float32)) * -10000.0 3.2.4 feed forward \u0026 dropout \u0026 layer normalize\nwith tf.variable_scope(\"output\"): attention_output = tf.layers.dense( attention_output, hidden_size, kernel_initializer=create_initializer(initializer_range)) attention_output = dropout(attention_output, hidden_dropout_prob) attention_output = layer_norm(attention_output + layer_input) 4 softmax二分类 output_layer = model.get_pooled_output() hidden_size = output_layer.shape[-1].value output_weights = tf.get_variable( \"output_weights\", [num_labels, hidden_size], initializer=tf.truncated_normal_initializer(stddev=0.02)) output_bias = tf.get_variable( \"output_bias\", [num_labels], initializer=tf.zeros_initializer()) with tf.variable_scope(\"loss\"): if is_training: # I.e., 0.1 dropout output_layer = tf.nn.dropout(output_layer, keep_prob=0.9) logits = tf.matmul(output_layer, output_weights, transpose_b=True) logits = tf.nn.bias_add(logits, output_bias) probabilities = tf.nn.softmax(logits, axis=-1) log_probs = tf.nn.log_softmax(logits, axis=-1) one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32) per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1) loss = tf.reduce_mean(per_example_loss) return (loss, per_example_loss, logits, probabilities) ",
+  "wordCount" : "902",
+  "inLanguage": "en",
+  "datePublished": "2025-04-19T00:00:00Z",
+  "dateModified": "2025-04-19T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://eightyoliveira.github.io/ai/bertfine-tuningglue-mrpc-data/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "我的博客",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://eightyoliveira.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://eightyoliveira.github.io/java" title="Java">
+                    <span>Java</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/git" title="git">
+                    <span>git</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/web" title="web">
+                    <span>web</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/ai" title="ai">
+                    <span>ai</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/database" title="database">
+                    <span>database</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      BERT微调GLUE MRPC数据集指南
+    </h1>
+    <div class="post-meta"><span title='2025-04-19 00:00:00 +0000 UTC'>April 19, 2025</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="bert微调glue-mrpc数据集指南">BERT微调GLUE MRPC数据集指南<a hidden class="anchor" aria-hidden="true" href="#bert微调glue-mrpc数据集指南">#</a></h1>
+<h1 id="1-env">1 env<a hidden class="anchor" aria-hidden="true" href="#1-env">#</a></h1>
+<p>env:python=3.6 tensorflow=1.15.0</p>
+<p>model:google-bert uncased_L-12_H-768_A-12</p>
+<h1 id="2-start_script">2 start_script<a hidden class="anchor" aria-hidden="true" href="#2-start_script">#</a></h1>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-plain" data-lang="plain"><span style="display:flex;"><span>python run_classifier.py 
+</span></span><span style="display:flex;"><span>--task_name=MRPC 
+</span></span><span style="display:flex;"><span>--do_train=true 
+</span></span><span style="display:flex;"><span>--do_eval=true 
+</span></span><span style="display:flex;"><span>--data_dir=..\bert\GLUE\glue_data\MRPC 
+</span></span><span style="display:flex;"><span>--vocab_file=..\bert\GLUE\uncased_L-12_H-768_A-12\vocab.txt 
+</span></span><span style="display:flex;"><span>--bert_config_file=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_config.json 
+</span></span><span style="display:flex;"><span>--init_checkpoint=..\bert\GLUE\uncased_L-12_H-768_A-12\bert_model.ckpt --max_seq_length=128 
+</span></span><span style="display:flex;"><span>--train_batch_size=8 
+</span></span><span style="display:flex;"><span>--learning_rate=2e-5 
+</span></span><span style="display:flex;"><span>--num_train_epochs=3.0 
+</span></span><span style="display:flex;"><span>--output_dir=..\bert\GLUE\mrpc_output
+</span></span></code></pre></div><h1 id="3-code_analysis">3 code_analysis<a hidden class="anchor" aria-hidden="true" href="#3-code_analysis">#</a></h1>
+<h2 id="31-pre_data">3.1 pre_data<a hidden class="anchor" aria-hidden="true" href="#31-pre_data">#</a></h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-plain" data-lang="plain"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>num_warmup_steps 是深度学习训练过程中一个非常重要的超参数，
+</span></span><span style="display:flex;"><span>尤其是在使用像 BERT 这样的预训练模型时。
+</span></span><span style="display:flex;"><span>它的作用是定义 学习率预热（learning rate warmup） 的步数，即在训练初期逐渐增加学习率的过程。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>为什么需要学习率预热？
+</span></span><span style="display:flex;"><span>1防止梯度爆炸或不稳定
+</span></span><span style="display:flex;"><span>在训练初期，模型的权重通常是随机初始化的（或者从预训练模型加载的权重与当前任务不完全匹配），此时如果直接使用较大的学习率，可能会导致梯度更新过大，从而引发训练不稳定甚至梯度爆炸。
+</span></span><span style="display:flex;"><span>通过逐步增加学习率，可以让模型在训练初期更平稳地适应数据分布。
+</span></span><span style="display:flex;"><span>2提高收敛速度
+</span></span><span style="display:flex;"><span>学习率预热可以帮助模型更快地找到合适的优化方向，尤其是在使用大批量（large batch size）训练时。
+</span></span><span style="display:flex;"><span>如果直接使用较高的学习率，可能会跳过最优解；而通过预热，可以让模型逐渐逼近最优解。
+</span></span><span style="display:flex;"><span>3BERT 模型的特殊性
+</span></span><span style="display:flex;"><span>BERT 是一个非常大的模型，具有大量的参数。在微调（fine-tuning）阶段，如果直接使用较大的学习率，可能会破坏预训练模型中已经学到的知识（即“灾难性遗忘”问题）。
+</span></span><span style="display:flex;"><span>因此，学习率预热通常被用作一种保护机制，确保模型在微调初期能够稳定地调整权重。
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_examples <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>num_train_steps <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>num_warmup_steps <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> FLAGS<span style="color:#f92672">.</span>do_train:
+</span></span><span style="display:flex;"><span>    train_examples <span style="color:#f92672">=</span> processor<span style="color:#f92672">.</span>get_train_examples(FLAGS<span style="color:#f92672">.</span>data_dir)
+</span></span><span style="display:flex;"><span>    num_train_steps <span style="color:#f92672">=</span> int(
+</span></span><span style="display:flex;"><span>        len(train_examples) <span style="color:#f92672">/</span> FLAGS<span style="color:#f92672">.</span>train_batch_size <span style="color:#f92672">*</span> FLAGS<span style="color:#f92672">.</span>num_train_epochs)
+</span></span><span style="display:flex;"><span>    num_warmup_steps <span style="color:#f92672">=</span> int(num_train_steps <span style="color:#f92672">*</span> FLAGS<span style="color:#f92672">.</span>warmup_proportion)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e">#input_ids通过将分词器分开的词，通过vocab_file替换为对应的id</span>
+</span></span><span style="display:flex;"><span>features[<span style="color:#e6db74">&#34;input_ids&#34;</span>] <span style="color:#f92672">=</span> create_int_feature(feature<span style="color:#f92672">.</span>input_ids)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#input_mask标记哪些是有效的token，哪些是padding</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#features[&#34;input_mask&#34;] = create_int_feature(feature.input_mask)</span>
+</span></span><span style="display:flex;"><span>用于区分输入中的不同句子或段落
+</span></span><span style="display:flex;"><span>features[<span style="color:#e6db74">&#34;segment_ids&#34;</span>] <span style="color:#f92672">=</span> create_int_feature(feature<span style="color:#f92672">.</span>segment_ids)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#0或者1 </span>
+</span></span><span style="display:flex;"><span>features[<span style="color:#e6db74">&#34;label_ids&#34;</span>] <span style="color:#f92672">=</span> create_int_feature([feature<span style="color:#f92672">.</span>label_id])
+</span></span></code></pre></div><h2 id="32-create_model">3.2 create_model<a hidden class="anchor" aria-hidden="true" href="#32-create_model">#</a></h2>
+<h3 id="321-embedding">3.2.1 embedding<a hidden class="anchor" aria-hidden="true" href="#321-embedding">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>token embedding层
+</span></span><span style="display:flex;"><span>[<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">128</span>] <span style="color:#f92672">-&gt;</span> [<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">768</span>]
+</span></span><span style="display:flex;"><span>[batch_size, seq_length] shape to [batch_size, seq_length, embedding_size]<span style="color:#f92672">.</span>
+</span></span><span style="display:flex;"><span>通过直接读取预训练好的embedding table<span style="color:#960050;background-color:#1e0010">，</span>根据单个token转换为768维向量
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>segment embedding层
+</span></span><span style="display:flex;"><span>输出是[batch_size, seq_length] 
+</span></span><span style="display:flex;"><span>二维的embedding<span style="color:#960050;background-color:#1e0010">，</span>输出是[<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">128</span>]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>position embedding
+</span></span><span style="display:flex;"><span>同上
+</span></span></code></pre></div><h3 id="322-create_mask">3.2.2 create_mask<a hidden class="anchor" aria-hidden="true" href="#322-create_mask">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>注意<span style="color:#960050;background-color:#1e0010">！</span>这里的mask是padding mask<span style="color:#960050;background-color:#1e0010">，</span>而不是transformer论文中的causal Mask
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">create_attention_mask_from_input_mask</span>(from_tensor, to_mask):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;&#34;&#34;Create 3D attention mask from a 2D tensor mask.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Args:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    from_tensor: 2D or 3D Tensor of shape [batch_size, from_seq_length, ...].
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    to_mask: int32 Tensor of shape [batch_size, to_seq_length].
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Returns:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    float Tensor of shape [batch_size, from_seq_length, to_seq_length].
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  from_shape <span style="color:#f92672">=</span> get_shape_list(from_tensor, expected_rank<span style="color:#f92672">=</span>[<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>])
+</span></span><span style="display:flex;"><span>  batch_size <span style="color:#f92672">=</span> from_shape[<span style="color:#ae81ff">0</span>] <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span>  from_seq_length <span style="color:#f92672">=</span> from_shape[<span style="color:#ae81ff">1</span>] <span style="color:#ae81ff">128</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  to_shape <span style="color:#f92672">=</span> get_shape_list(to_mask, expected_rank<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>  to_seq_length <span style="color:#f92672">=</span> to_shape[<span style="color:#ae81ff">1</span>] <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span>  to_mask <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>cast(
+</span></span><span style="display:flex;"><span>      tf<span style="color:#f92672">.</span>reshape(to_mask, [batch_size, <span style="color:#ae81ff">1</span>, to_seq_length]), tf<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>    [<span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">128</span>]
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># We don&#39;t assume that `from_tensor` is a mask (although it could be). We</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># don&#39;t actually care if we attend *from* padding tokens (only *to* padding)</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># tokens so we create a tensor of all ones.</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># `broadcast_ones` = [batch_size, from_seq_length, 1]</span>
+</span></span><span style="display:flex;"><span>  broadcast_ones <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>ones(
+</span></span><span style="display:flex;"><span>      shape<span style="color:#f92672">=</span>[batch_size, from_seq_length, <span style="color:#ae81ff">1</span>], dtype<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Here we broadcast along two dimensions to create the mask.</span>
+</span></span><span style="display:flex;"><span>  mask <span style="color:#f92672">=</span> broadcast_ones <span style="color:#f92672">*</span> to_mask
+</span></span><span style="display:flex;"><span> [<span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">128</span>, <span style="color:#ae81ff">128</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> mask
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>to_mask <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>    [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第一个样本：前 3 个位置有效，第 4 个位置是填充</span>
+</span></span><span style="display:flex;"><span>    [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>]   <span style="color:#75715e"># 第二个样本：前 2 个位置有效，后 2 个位置是填充</span>
+</span></span><span style="display:flex;"><span>]
+</span></span><span style="display:flex;"><span>mask <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第一个样本，第一个位置可以关注前 3 个位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第一个样本，第二个位置可以关注前 3 个位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第一个样本，第三个位置可以关注前 3 个位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>]   <span style="color:#75715e"># 第一个样本，第四个位置是填充，不能关注任何位置</span>
+</span></span><span style="display:flex;"><span>    ],
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第二个样本，第一个位置可以关注前 2 个位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第二个样本，第二个位置可以关注前 2 个位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>],  <span style="color:#75715e"># 第二个样本，第三个位置是填充，不能关注任何位置</span>
+</span></span><span style="display:flex;"><span>        [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>]   <span style="color:#75715e"># 第二个样本，第四个位置是填充，不能关注任何位置</span>
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div><h3 id="323-qkv">3.2.3 qkv<a hidden class="anchor" aria-hidden="true" href="#323-qkv">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;&#34;&#34;Multi-headed, multi-layer Transformer from &#34;Attention is All You Need&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  This is almost an exact implementation of the original Transformer encoder.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  See the original paper:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://arxiv.org/abs/1706.03762
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Also see:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/transformer.py
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Args:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      [8,128,768] 实际参数
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    input_tensor: float Tensor of shape [batch_size, seq_length, hidden_size].
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      [8,128,128]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    attention_mask: (optional) int32 Tensor of shape [batch_size, seq_length,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      seq_length], with 1 for positions that can be attended to and 0 in
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      positions that should not be.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        768
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    hidden_size: int. Hidden size of the Transformer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      default 12 多层self_attention
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    num_hidden_layers: int. Number of layers (blocks) in the Transformer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      default 12
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    num_attention_heads: int. Number of attention heads in the Transformer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    intermediate_size: int. The size of the &#34;intermediate&#34; (a.k.a., feed
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      forward) layer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    intermediate_act_fn: function. The non-linear activation function to apply
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      to the output of the intermediate/feed-forward layer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    hidden_dropout_prob: float. Dropout probability for the hidden layers.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    attention_probs_dropout_prob: float. Dropout probability of the attention
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      probabilities.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    initializer_range: float. Range of the initializer (stddev of truncated
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      normal).
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    do_return_all_layers: Whether to also return all layers or just the final
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      layer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Returns:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    float Tensor of shape [batch_size, seq_length, hidden_size], the final
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    hidden layer of the Transformer.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Raises:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ValueError: A Tensor shape or parameter is invalid.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;&#34;&#34;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ae81ff">12</span>的倍数<span style="color:#960050;background-color:#1e0010">，</span>所以768<span style="color:#960050;background-color:#1e0010">，</span>每个头64个特征
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> hidden_size <span style="color:#f92672">%</span> num_attention_heads <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;The hidden size (</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">) is not a multiple of the number of attention &#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;heads (</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">)&#34;</span> <span style="color:#f92672">%</span> (hidden_size, num_attention_heads))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  attention_head_size <span style="color:#f92672">=</span> int(hidden_size <span style="color:#f92672">/</span> num_attention_heads)
+</span></span><span style="display:flex;"><span>  input_shape <span style="color:#f92672">=</span> get_shape_list(input_tensor, expected_rank<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>  batch_size <span style="color:#f92672">=</span> input_shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>  seq_length <span style="color:#f92672">=</span> input_shape[<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>  input_width <span style="color:#f92672">=</span> input_shape[<span style="color:#ae81ff">2</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># The Transformer performs sum residuals on all layers so the input needs</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># to be the same as the hidden size.</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> input_width <span style="color:#f92672">!=</span> hidden_size:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;The width of the input tensor (</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">) != hidden size (</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">)&#34;</span> <span style="color:#f92672">%</span>
+</span></span><span style="display:flex;"><span>                     (input_width, hidden_size))
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>  <span style="color:#75715e"># We keep the representation as a 2D tensor to avoid re-shaping it back and</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># the GPU/CPU but may not be free on the TPU, so we want to minimize them to</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># help the optimizer.</span>
+</span></span><span style="display:flex;"><span>  prev_output <span style="color:#f92672">=</span> reshape_to_matrix(input_tensor) [<span style="color:#ae81ff">1024</span>,<span style="color:#ae81ff">768</span>]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>  <span style="color:#75715e"># Scalar dimensions referenced here:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#   B = batch size (number of sequences) 8</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#   F = `from_tensor` sequence length 128</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#   T = `to_tensor` sequence length 128</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#   N = `num_attention_heads` 12</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#   H = `size_per_head` 64</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>对于每个词<span style="color:#960050;background-color:#1e0010">，</span>都构建出对应特征向量<span style="color:#960050;background-color:#1e0010">，</span><span style="color:#ae81ff">12</span>个头<span style="color:#960050;background-color:#1e0010">，</span>每个头64特征
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># `query_layer` = [B*F, N*H] [1024,768] </span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># `key_layer` = [B*T, N*H]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># `value_layer` = [B*T, N*H]</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>在softmax之前<span style="color:#960050;background-color:#1e0010">，</span>scores算出来之前<span style="color:#960050;background-color:#1e0010">，</span>将后面的遮蔽
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> attention_mask <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># `attention_mask` = [B, 1, F, T]</span>
+</span></span><span style="display:flex;"><span>    attention_mask <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>expand_dims(attention_mask, axis<span style="color:#f92672">=</span>[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Since attention_mask is 1.0 for positions we want to attend and 0.0 for</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># masked positions, this operation will create a tensor which is 0.0 for</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># positions we want to attend and -10000.0 for masked positions.</span>
+</span></span><span style="display:flex;"><span>    adder <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1.0</span> <span style="color:#f92672">-</span> tf<span style="color:#f92672">.</span>cast(attention_mask, tf<span style="color:#f92672">.</span>float32)) <span style="color:#f92672">*</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">10000.0</span>
+</span></span></code></pre></div><p>3.2.4 feed forward &amp; dropout &amp; layer normalize</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-plain" data-lang="plain"><span style="display:flex;"><span>with tf.variable_scope(&#34;output&#34;):
+</span></span><span style="display:flex;"><span>  attention_output = tf.layers.dense(
+</span></span><span style="display:flex;"><span>      attention_output,
+</span></span><span style="display:flex;"><span>      hidden_size,
+</span></span><span style="display:flex;"><span>      kernel_initializer=create_initializer(initializer_range))
+</span></span><span style="display:flex;"><span>  attention_output = dropout(attention_output, hidden_dropout_prob)
+</span></span><span style="display:flex;"><span>  attention_output = layer_norm(attention_output + layer_input)
+</span></span></code></pre></div><h1 id="4-softmax二分类">4 softmax二分类<a hidden class="anchor" aria-hidden="true" href="#4-softmax二分类">#</a></h1>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>  output_layer <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>get_pooled_output()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  hidden_size <span style="color:#f92672">=</span> output_layer<span style="color:#f92672">.</span>shape[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">.</span>value
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  output_weights <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>get_variable(
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#34;output_weights&#34;</span>, [num_labels, hidden_size],
+</span></span><span style="display:flex;"><span>      initializer<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>truncated_normal_initializer(stddev<span style="color:#f92672">=</span><span style="color:#ae81ff">0.02</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  output_bias <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>get_variable(
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#34;output_bias&#34;</span>, [num_labels], initializer<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>zeros_initializer())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">with</span> tf<span style="color:#f92672">.</span>variable_scope(<span style="color:#e6db74">&#34;loss&#34;</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> is_training:
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e"># I.e., 0.1 dropout</span>
+</span></span><span style="display:flex;"><span>      output_layer <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>dropout(output_layer, keep_prob<span style="color:#f92672">=</span><span style="color:#ae81ff">0.9</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    logits <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>matmul(output_layer, output_weights, transpose_b<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>    logits <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>bias_add(logits, output_bias)
+</span></span><span style="display:flex;"><span>    probabilities <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>softmax(logits, axis<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    log_probs <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>log_softmax(logits, axis<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    one_hot_labels <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>one_hot(labels, depth<span style="color:#f92672">=</span>num_labels, dtype<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    per_example_loss <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>tf<span style="color:#f92672">.</span>reduce_sum(one_hot_labels <span style="color:#f92672">*</span> log_probs, axis<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>reduce_mean(per_example_loss)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (loss, per_example_loss, logits, probabilities)
+</span></span></code></pre></div>
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -5,11 +5,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Tags | 我的博客</title>
+<title>Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错 | 我的博客</title>
 <meta name="keywords" content="">
-<meta name="description" content="">
+<meta name="description" content="解决方案: 把类型改为varchar，成功解决
+原因分析:">
 <meta name="author" content="">
-<link rel="canonical" href="https://eightyoliveira.github.io/tags/">
+<link rel="canonical" href="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://eightyoliveira.github.io/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="https://eightyoliveira.github.io/favicon-16x16.png">
@@ -18,8 +19,7 @@
 <link rel="mask-icon" href="https://eightyoliveira.github.io/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" type="application/rss+xml" href="https://eightyoliveira.github.io/tags/index.xml">
-<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/tags/">
+<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/">
 <noscript>
     <style>
         #theme-toggle,
@@ -56,18 +56,74 @@
         }
 
     </style>
-</noscript><meta property="og:url" content="https://eightyoliveira.github.io/tags/">
+</noscript><meta property="og:url" content="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/">
   <meta property="og:site_name" content="我的博客">
-  <meta property="og:title" content="Tags">
+  <meta property="og:title" content="Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错">
+  <meta property="og:description" content="解决方案: 把类型改为varchar，成功解决
+原因分析:">
   <meta property="og:locale" content="zh-cn">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="database">
+    <meta property="article:published_time" content="2024-09-20T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-09-20T00:00:00+00:00">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Tags">
-<meta name="twitter:description" content="">
+<meta name="twitter:title" content="Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错">
+<meta name="twitter:description" content="解决方案: 把类型改为varchar，成功解决
+原因分析:">
 
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Databases",
+      "item": "https://eightyoliveira.github.io/database/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
+      "item": "https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
+  "name": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
+  "description": "解决方案: 把类型改为varchar，成功解决\n原因分析:\n",
+  "keywords": [
+    
+  ],
+  "articleBody": "解决方案: 把类型改为varchar，成功解决\n原因分析:\n",
+  "wordCount" : "3",
+  "inLanguage": "en",
+  "datePublished": "2024-09-20T00:00:00Z",
+  "dateModified": "2024-09-20T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "我的博客",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://eightyoliveira.github.io/favicon.ico"
+    }
+  }
+}
+</script>
 </head>
 
-<body class="list" id="top">
+<body class="" id="top">
 <script>
     if (localStorage.getItem("pref-theme") === "dark") {
         document.body.classList.add('dark');
@@ -136,12 +192,28 @@
     </nav>
 </header>
 <main class="main">
-<header class="page-header">
-    <h1>Tags</h1>
-</header>
 
-<ul class="terms-tags">
-</ul>
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错
+    </h1>
+    <div class="post-meta"><span title='2024-09-20 00:00:00 +0000 UTC'>September 20, 2024</span>
+
+</div>
+  </header> 
+  <div class="post-content"><p>解决方案: 把类型改为varchar，成功解决</p>
+<p>原因分析:</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
     </main>
     
 <footer class="footer">

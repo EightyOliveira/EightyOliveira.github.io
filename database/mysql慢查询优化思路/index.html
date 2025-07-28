@@ -5,11 +5,19 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Tags | 我的博客</title>
+<title>mysql慢查询优化思路 | 我的博客</title>
 <meta name="keywords" content="">
-<meta name="description" content="">
+<meta name="description" content="索引explain
+冷热数据备份
+宽表
+内存中做连接
+分库分表
+迁移至分布式数据库
+mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es)
+机器性能 cpu和磁盘io排查
+mysql做集群读写分离">
 <meta name="author" content="">
-<link rel="canonical" href="https://eightyoliveira.github.io/tags/">
+<link rel="canonical" href="https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://eightyoliveira.github.io/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="https://eightyoliveira.github.io/favicon-16x16.png">
@@ -18,8 +26,7 @@
 <link rel="mask-icon" href="https://eightyoliveira.github.io/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" type="application/rss+xml" href="https://eightyoliveira.github.io/tags/index.xml">
-<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/tags/">
+<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/">
 <noscript>
     <style>
         #theme-toggle,
@@ -56,18 +63,80 @@
         }
 
     </style>
-</noscript><meta property="og:url" content="https://eightyoliveira.github.io/tags/">
+</noscript><meta property="og:url" content="https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/">
   <meta property="og:site_name" content="我的博客">
-  <meta property="og:title" content="Tags">
+  <meta property="og:title" content="mysql慢查询优化思路">
+  <meta property="og:description" content="索引explain 冷热数据备份 宽表 内存中做连接 分库分表 迁移至分布式数据库 mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es) 机器性能 cpu和磁盘io排查 mysql做集群读写分离">
   <meta property="og:locale" content="zh-cn">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="database">
+    <meta property="article:published_time" content="2024-11-14T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-11-14T00:00:00+00:00">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Tags">
-<meta name="twitter:description" content="">
+<meta name="twitter:title" content="mysql慢查询优化思路">
+<meta name="twitter:description" content="索引explain
+冷热数据备份
+宽表
+内存中做连接
+分库分表
+迁移至分布式数据库
+mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es)
+机器性能 cpu和磁盘io排查
+mysql做集群读写分离">
 
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Databases",
+      "item": "https://eightyoliveira.github.io/database/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "mysql慢查询优化思路",
+      "item": "https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "mysql慢查询优化思路",
+  "name": "mysql慢查询优化思路",
+  "description": "索引explain 冷热数据备份 宽表 内存中做连接 分库分表 迁移至分布式数据库 mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es) 机器性能 cpu和磁盘io排查 mysql做集群读写分离",
+  "keywords": [
+    
+  ],
+  "articleBody": "索引explain 冷热数据备份 宽表 内存中做连接 分库分表 迁移至分布式数据库 mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es) 机器性能 cpu和磁盘io排查 mysql做集群读写分离 ",
+  "wordCount" : "15",
+  "inLanguage": "en",
+  "datePublished": "2024-11-14T00:00:00Z",
+  "dateModified": "2024-11-14T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "我的博客",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://eightyoliveira.github.io/favicon.ico"
+    }
+  }
+}
+</script>
 </head>
 
-<body class="list" id="top">
+<body class="" id="top">
 <script>
     if (localStorage.getItem("pref-theme") === "dark") {
         document.body.classList.add('dark');
@@ -136,12 +205,35 @@
     </nav>
 </header>
 <main class="main">
-<header class="page-header">
-    <h1>Tags</h1>
-</header>
 
-<ul class="terms-tags">
-</ul>
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      mysql慢查询优化思路
+    </h1>
+    <div class="post-meta"><span title='2024-11-14 00:00:00 +0000 UTC'>November 14, 2024</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="索引explain">索引explain<a hidden class="anchor" aria-hidden="true" href="#索引explain">#</a></h1>
+<h1 id="冷热数据备份">冷热数据备份<a hidden class="anchor" aria-hidden="true" href="#冷热数据备份">#</a></h1>
+<h1 id="宽表">宽表<a hidden class="anchor" aria-hidden="true" href="#宽表">#</a></h1>
+<h1 id="内存中做连接">内存中做连接<a hidden class="anchor" aria-hidden="true" href="#内存中做连接">#</a></h1>
+<h1 id="分库分表">分库分表<a hidden class="anchor" aria-hidden="true" href="#分库分表">#</a></h1>
+<h1 id="迁移至分布式数据库">迁移至分布式数据库<a hidden class="anchor" aria-hidden="true" href="#迁移至分布式数据库">#</a></h1>
+<h1 id="mq迁移数据-查询放到es等olap数据库中-cancel-mq-etl-es">mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es)<a hidden class="anchor" aria-hidden="true" href="#mq迁移数据-查询放到es等olap数据库中-cancel-mq-etl-es">#</a></h1>
+<h1 id="机器性能-cpu和磁盘io排查">机器性能 cpu和磁盘io排查<a hidden class="anchor" aria-hidden="true" href="#机器性能-cpu和磁盘io排查">#</a></h1>
+<h1 id="mysql做集群读写分离">mysql做集群读写分离<a hidden class="anchor" aria-hidden="true" href="#mysql做集群读写分离">#</a></h1>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
     </main>
     
 <footer class="footer">

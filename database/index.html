@@ -5,11 +5,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Tags | 我的博客</title>
+<title>Databases | 我的博客</title>
 <meta name="keywords" content="">
-<meta name="description" content="">
+<meta name="description" content="Databases - 我的博客">
 <meta name="author" content="">
-<link rel="canonical" href="https://eightyoliveira.github.io/tags/">
+<link rel="canonical" href="https://eightyoliveira.github.io/database/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://eightyoliveira.github.io/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="https://eightyoliveira.github.io/favicon-16x16.png">
@@ -18,8 +18,8 @@
 <link rel="mask-icon" href="https://eightyoliveira.github.io/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" type="application/rss+xml" href="https://eightyoliveira.github.io/tags/index.xml">
-<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/tags/">
+<link rel="alternate" type="application/rss+xml" href="https://eightyoliveira.github.io/database/index.xml">
+<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/database/">
 <noscript>
     <style>
         #theme-toggle,
@@ -56,15 +56,30 @@
         }
 
     </style>
-</noscript><meta property="og:url" content="https://eightyoliveira.github.io/tags/">
+</noscript><meta property="og:url" content="https://eightyoliveira.github.io/database/">
   <meta property="og:site_name" content="我的博客">
-  <meta property="og:title" content="Tags">
+  <meta property="og:title" content="Databases">
   <meta property="og:locale" content="zh-cn">
   <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Tags">
+<meta name="twitter:title" content="Databases">
 <meta name="twitter:description" content="">
 
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Databases",
+      "item": "https://eightyoliveira.github.io/database/"
+    }
+  ]
+}
+</script>
 </head>
 
 <body class="list" id="top">
@@ -129,19 +144,85 @@
             </li>
             <li>
                 <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                    <span class="active">database</span>
                 </a>
             </li>
         </ul>
     </nav>
 </header>
-<main class="main">
+<main class="main"> 
 <header class="page-header">
-    <h1>Tags</h1>
+  <h1>
+    Databases
+  </h1>
 </header>
 
-<ul class="terms-tags">
-</ul>
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">SQL中ON和WHERE条件位置
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>业务场景 我们有两个表：
+monitor_table：监控记录表 admin_table：管理员信息表 这两个表通过字段 key_man_name（监控记录中的负责人）和 name（管理员姓名）进行关联。
+还有一个逻辑删除标志 del_flag，表示管理员是否被&#34;软删除&#34;，值为 ‘0’ 表示有效。
+查询示例对比 示例1：条件放在ON子句中（保留所有左表记录） SELECT * FROM monitor_table mt LEFT JOIN admin_table at ON mt.key_man_name = at.name AND at.del_flag = &#39;0&#39;; 结果：
+mt.id mt.key_man_name at.name at.del_flag 1 张三 张三 0 2 李四 NULL NULL 3 王五 王五 0 解释：
+所有monitor_table的记录都保留了 对于李四，因为他在admin_table中存在但del_flag != &#39;0&#39;，所以没有匹配上，结果为NULL 示例2：条件放在WHERE子句中（只保留满足条件的记录） SELECT * FROM monitor_table mt LEFT JOIN admin_table at ON mt.key_man_name = at.name WHERE at.del_flag = &#39;0&#39;; 结果：
+mt.id mt.key_man_name at.name at.del_flag 1 张三 张三 0 3 王五 王五 0 解释：
+李四被过滤掉了，因为at.del_flag = &#39;0&#39;是在WHERE中判断的，此时at为NULL，不满足条件 实际效果等同于INNER JOIN 关键区别 ON子句：
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2025-06-30 00:00:00 +0000 UTC'>June 30, 2025</span></footer>
+  <a class="entry-link" aria-label="post link to SQL中ON和WHERE条件位置" href="https://eightyoliveira.github.io/database/sql%E4%B8%ADon%E5%92%8Cwhere%E6%9D%A1%E4%BB%B6%E4%BD%8D%E7%BD%AE/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">mysql慢查询优化思路
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>索引explain 冷热数据备份 宽表 内存中做连接 分库分表 迁移至分布式数据库 mq迁移数据 ，查询放到es等olap数据库中( cancel mq etl es) 机器性能 cpu和磁盘io排查 mysql做集群读写分离</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-11-14 00:00:00 +0000 UTC'>November 14, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to mysql慢查询优化思路" href="https://eightyoliveira.github.io/database/mysql%E6%85%A2%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Mysql--对varchar字段用int数值来查询的问题
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>例子 age是varchar类型
+select * from table_name where age=&#39;1111111111111111111111111111111&#39; select * from table_name where age=1111111111111111111111111111111 如果不加单引号，会查出其他很多无关数据
+官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation
+从其他copy过来的翻译
+在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。
+字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，‘ab123’取到的值是0）
+在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。
+如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。
+PS:oracle中不会出现这个问题
+</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-10-06 00:00:00 +0000 UTC'>October 6, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Mysql--对varchar字段用int数值来查询的问题" href="https://eightyoliveira.github.io/database/mysql--%E5%AF%B9varchar%E5%AD%97%E6%AE%B5%E7%94%A8int%E6%95%B0%E5%80%BC%E6%9D%A5%E6%9F%A5%E8%AF%A2%E7%9A%84%E9%97%AE%E9%A2%98/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>解决方案: 把类型改为varchar，成功解决
+原因分析:
+</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-09-20 00:00:00 +0000 UTC'>September 20, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错" href="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/"></a>
+</article>
     </main>
     
 <footer class="footer">
