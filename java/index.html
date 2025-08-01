@@ -5,9 +5,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Javas | 我的博客</title>
+<title>Javas | Home</title>
 <meta name="keywords" content="">
-<meta name="description" content="Javas - 我的博客">
+<meta name="description" content="Javas - Home">
 <meta name="author" content="">
 <link rel="canonical" href="https://eightyoliveira.github.io/java/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
@@ -57,7 +57,7 @@
 
     </style>
 </noscript><meta property="og:url" content="https://eightyoliveira.github.io/java/">
-  <meta property="og:site_name" content="我的博客">
+  <meta property="og:site_name" content="Home">
   <meta property="og:title" content="Javas">
   <meta property="og:locale" content="zh-cn">
   <meta property="og:type" content="website">
@@ -97,7 +97,7 @@
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -128,23 +128,28 @@
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/git" title="git">
-                    <span>git</span>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span>Web</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/web" title="web">
-                    <span>web</span>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/ai" title="ai">
-                    <span>ai</span>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
                 </a>
             </li>
         </ul>
@@ -153,7 +158,8 @@
 <main class="main"> 
 <header class="page-header">
   <h1>
-    Javas
+
+
   </h1>
 </header>
 
@@ -163,10 +169,14 @@
     </h2>
   </header>
   <div class="entry-content">
-    <p>基本用法 Arrays.asList() 是 Java 中一个常用的工具方法，用于将数组快速转换为 List。虽然使用方便，但如果不了解其特性，很容易踩坑。
-String[] array = {&#34;a&#34;, &#34;b&#34;, &#34;c&#34;}; List&lt;String&gt; list = Arrays.asList(array); 注意事项（常见坑点） 1. 返回的 List 不是 java.util.ArrayList Arrays.asList() 返回的是 Arrays 类内部的一个私有静态类 java.util.Arrays.ArrayList，不是 java.util.ArrayList。 这个列表是固定大小的，不能添加或删除元素。 List&lt;String&gt; list = Arrays.asList(&#34;a&#34;, &#34;b&#34;, &#34;c&#34;); list.add(&#34;d&#34;); // 抛出 UnsupportedOperationException 解决办法：如果你需要一个可变长度的列表，应使用：
-List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList(&#34;a&#34;, &#34;b&#34;, &#34;c&#34;)); 2. 原始数组与列表共享存储空间 对数组或返回的列表进行修改，都会影响对方，因为它们指向同一块内存。 String[] array = {&#34;a&#34;, &#34;b&#34;, &#34;c&#34;}; List&lt;String&gt; list = Arrays.asList(array); list.set(0, &#34;z&#34;); System.out.println(array[0]); // 输出: z 建议：如需独立副本，请手动复制：
-List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList(array)); 3. 传入基本类型数组时会有“意外”结果 当你使用基本类型数组（如 int[]、boolean[]）时，会得到一个包含整个数组的单元素列表，而不是每个元素作为一个列表项。 int[] arr = {1, 2, 3}; List&lt;int[]&gt; list = Arrays.asList(arr); // 只有一个元素！ System.out.println(list.size()); // 输出: 1 原因：asList 的泛型不支持基本类型，数组会被当作一个对象处理。
+    <p>1 基本用法 Arrays.asList() 是 Java 中一个常用的工具方法，用于将数组快速转换为 List。虽然使用方便，但如果不了解其特性，很容易踩坑。
+String[] array = {&#34;a&#34;, &#34;b&#34;, &#34;c&#34;}; List&lt;String&gt; list = Arrays.asList(array); 2 注意事项 2.1 返回的 List 不是java.util.ArrayList Arrays.asList() 返回的是 Arrays 类内部的一个私有静态类 java.util.Arrays.ArrayList，不是 java.util.ArrayList。
+这个列表是固定大小的，不能添加或删除元素。
+List&lt;String&gt; list = Arrays.asList(&#34;a&#34;, &#34;b&#34;, &#34;c&#34;); list. add(&#34;d&#34;); // 抛出 UnsupportedOperationException 解决办法：如果你需要一个可变长度的列表，应使用：
+List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList(&#34;a&#34;, &#34;b&#34;, &#34;c&#34;)); 2.2 原始数组与列表共享存储空间 对数组或返回的列表进行修改，都会影响对方，因为它们指向同一块内存。
+String[] array = {&#34;a&#34;, &#34;b&#34;, &#34;c&#34;}; List&lt;String&gt; list = Arrays.asList(array); list. set(0,&#34;z&#34;); System.out.println(array[0]); // 输出: z 建议：如需独立副本，请手动复制：
+List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList(array)); 2.3 传入基本类型数组时会有“意外”结果 当你使用基本类型数组（如 int[]、boolean[]）时，会得到一个包含整个数组的单元素列表，而不是每个元素作为一个列表项。
+int[] arr = {1, 2, 3}; List&lt;int[]&gt; list = Arrays.asList(arr); // 只有一个元素！ System.out. println(list.size()); // 输出: 1 原因：asList 的泛型不支持基本类型，数组会被当作一个对象处理。
 ...</p>
   </div>
   <footer class="entry-footer"><span title='2025-07-04 00:00:00 +0000 UTC'>July 4, 2025</span></footer>
@@ -175,37 +185,52 @@ List&lt;String&gt; list = new ArrayList&lt;&gt;(Arrays.asList(array)); 3. 传入
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">string的split小坑
+    <h2 class="entry-hint-parent">String的Split小坑
     </h2>
   </header>
   <div class="entry-content">
-    <p>示例说明 示例： String str = &#34;a,b,c,,&#34;; String[] result = str.split(&#34;,&#34;); System.out.println(Arrays.toString(result)); 输出：
-[a, b, c] 你可能会预期结果是 [a, b, c, &#34;&#34;, &#34;&#34;]，但实际只有 [a, b, c]。
-原因： 因为最后两个逗号之间是空字符串（&#34;&#34;），Java 的 split() 方法会把这些尾部的空字符串当作“无意义”的内容自动去掉了。
-技术细节 Java 中 String.split() 实际调用了 Pattern.split()，其默认行为如下：
-public String[] split(CharSequence input, int limit) 当你调用 split(regex) 时，底层其实是调用了 split(regex, 0) 如果 limit == 0，那么尾部的空字符串将不会保留在结果数组中 如何保留尾部的空字符串？ 如果你想保留这些尾部的空字符串，可以传入一个负数作为 limit 参数：
-String str = &#34;a,b,c,,&#34;; String[] result = str.split(&#34;,&#34;, -1); System.out.println(Arrays.toString(result)); 输出：
+    <p>1 示例说明 1.1 示例： String str = &#34;a,b,c,,&#34;; String[] result = str.split(&#34;,&#34;); System.out. println(Arrays.toString(result)); 输出：
+[a, b, c] 预期结果是 [a, b, c, &#34;&#34;, &#34;&#34;]，但实际只有 [a, b, c]。
+1.2 原因： 因为最后两个逗号之间是空字符串（&#34;&#34;），Java 的 split() 方法会把这些尾部的空字符串当作“无意义”的内容自动去掉了。
+2 技术细节 Java 中 String.split() 实际调用了 Pattern.split()，其默认行为如下：
+public String[] split(CharSequence input, int limit) 当你调用 split(regex) 时，底层其实是调用了 split(regex, 0) 如果 limit == 0，那么尾部的空字符串将不会保留在结果数组中 3 保留尾部的空字符串？ 如果你想保留这些尾部的空字符串，可以传入一个负数作为 limit 参数：
+String str = &#34;a,b,c,,&#34;; String[] result = str.split(&#34;,&#34;, -1); System.out. println(Arrays.toString(result)); 输出：
 [a, b, c, &#34;&#34;, &#34;&#34;] 这样就可以保留所有的分割结果了。
-</p>
+...</p>
   </div>
   <footer class="entry-footer"><span title='2025-07-04 00:00:00 +0000 UTC'>July 4, 2025</span></footer>
-  <a class="entry-link" aria-label="post link to string的split小坑" href="https://eightyoliveira.github.io/java/string%E7%9A%84split%E5%B0%8F%E5%9D%91/"></a>
+  <a class="entry-link" aria-label="post link to String的Split小坑" href="https://eightyoliveira.github.io/java/string%E7%9A%84split%E5%B0%8F%E5%9D%91/"></a>
 </article>
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">JavaReentrantLock
+    <h2 class="entry-hint-parent">JVM中Synchronized实现机制
     </h2>
   </header>
   <div class="entry-content">
-    <p>final void lock() { if (compareAndSetState(0, 1)) setExclusiveOwnerThread(Thread.currentThread()); else acquire(1); } ReentrantLock维护了一个Sync
-Sync -&gt;NonfairSync -&gt;AbstractQueuedSynchronizer
-四个参数 NonfairSync对象 16 0 1
-safe.compareAndSwapInt(this, stateOffset, expect, update); //TODO:
-</p>
+    <p>1 实现原理 每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。
+Monitor结构：在HotSpot虚拟机中，Monitor由C&#43;&#43;实现，主要包含：
+_owner：指向当前持有锁的线程。 _WaitSet：存放调用wait()方法后被阻塞的线程。 _EntryList：存放等待获取锁的线程。 2 锁升级机制 无锁状态：对象刚创建时，没有线程竞争。 偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。 轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。 重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。 3 字节码层面 synchronized代码块在编译后通过monitorenter和monitorexit指令实现：
+monitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。 monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。 </p>
+  </div>
+  <footer class="entry-footer"><span title='2024-11-14 00:00:00 +0000 UTC'>November 14, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to JVM中Synchronized实现机制" href="https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Java ReentrantLock
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>1. 实现 ReentrantLock 内部通过继承 AQS（AbstractQueuedSynchronizer）实现同步控制。
+维护一个抽象内部类 Sync，继承自 AQS。
+Sync 有两个实现：
+NonfairSync：非公平锁（默认） FairSync：公平锁 类关系：
+ReentrantLock Sync (extends AQS) NonfairSync FairSync 2. 加锁源码 final void lock() { if (compareAndSetState(0, 1)) setExclusiveOwnerThread(Thread.currentThread()); else acquire(1); } 步骤： 先尝试用 CAS 将 state 从 0 改为 1。 成功则设置当前线程为独占线程，获取锁。 失败则进入 acquire(1) 流程。 3. CAS compareAndSetState 基于 Unsafe 类的 CAS 操作： unsafe.compareAndSwapInt(this, stateOffset, expect, update); 参数说明（对应你提到的四个值）： this：Sync 实例（AQS 子类） stateOffset：state 字段的内存偏移量（如 16） expect：期望值（0） update：更新值（1） 作用：保证 state 的修改是原子的。 5. acquire(1) 流程 acquire 是 AQS 提供的方法： public final void acquire(int arg) { if (!tryAcquire(arg) &amp;&amp; acquireQueued(addWaiter(Node.EXCLUSIVE), arg)) selfInterrupt(); } 步骤： tryAcquire：再次尝试获取锁（NonfairSync 中会尝试 CAS 或判断是否重入） addWaiter：构建 Node 节点，加入同步队列尾部 acquireQueued：在队列中自旋等待，尝试获取锁，失败则 park 阻塞 selfInterrupt：如果在等待过程中被中断，重新设置中断状态 6. state 状态管理 state 是 AQS 中的 volatile 变量，表示锁的持有状态。 state = 0：锁空闲 state &gt;= 1：锁被占用 可重入性： 同一线程多次 lock，state 递增 每次 unlock，state 递减 state 回到 0 时彻底释放锁 7. 同步队列（AQS 队列） 当线程获取锁失败时，会被封装成 Node 节点加入 AQS 的双向链表队列。 队列中的线程通过 park/unpark 机制阻塞和唤醒。 公平锁：新线程必须排队，不能插队。 非公平锁：新线程可以先尝试抢锁（CAS），抢不到再排队。 </p>
   </div>
   <footer class="entry-footer"><span title='2024-11-13 00:00:00 +0000 UTC'>November 13, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to JavaReentrantLock" href="https://eightyoliveira.github.io/java/javareentrantlock/"></a>
+  <a class="entry-link" aria-label="post link to Java ReentrantLock" href="https://eightyoliveira.github.io/java/java-reentrantlock/"></a>
 </article>
 
 <article class="post-entry"> 
@@ -214,8 +239,8 @@ safe.compareAndSwapInt(this, stateOffset, expect, update); //TODO:
     </h2>
   </header>
   <div class="entry-content">
-    <p>1. ThreadLocal ThreadLocal 通过 set 和 get 方法为每个线程保存独立的变量副本。每个线程都有一个自己的 ThreadLocalMap，其中 key 是 ThreadLocal 实例本身，value 是线程局部变量的值。
-示例代码： class Solution { private static final ThreadLocal&lt;String&gt; threadLocal = new ThreadLocal&lt;&gt;(); public static void main(String[] args) { threadLocal.set(&#34;Hi ThreadLocal&#34;); Thread t = new Thread(() -&gt; { System.out.println(threadLocal.get()); }); t.start(); } } set 方法源码： public void set(T value) { Thread t = Thread.currentThread(); ThreadLocalMap map = getMap(t); if (map != null) map.set(this, value); else createMap(t, value); } get 方法源码： public T get() { Thread t = Thread.currentThread(); ThreadLocalMap map = getMap(t); if (map != null) { ThreadLocalMap.Entry e = map.getEntry(this); if (e != null) { @SuppressWarnings(&#34;unchecked&#34;) T result = (T)e.value; return result; } } return setInitialValue(); } 2. InheritableThreadLocal InheritableThreadLocal 是 ThreadLocal 的子类，重写了 getMap 和 createMap 方法，使用线程的 inheritableThreadLocals 字段来存储值。
+    <p>1 ThreadLocal ThreadLocal 通过 set 和 get 方法为每个线程保存独立的变量副本。每个线程都有一个自己的 ThreadLocalMap，其中 key 是 ThreadLocal 实例本身，value 是线程局部变量的值。
+class Solution { private static final ThreadLocal&lt;String&gt; threadLocal = new ThreadLocal&lt;&gt;(); public static void main(String[] args) { threadLocal.set(&#34;threadLocal&#34;); Thread t = new Thread(() -&gt; { System.out.println(threadLocal.get()); }); t.start(); } } public void set(T value) { Thread t = Thread.currentThread(); ThreadLocalMap map = getMap(t); if (map != null) map.set(this, value); else createMap(t, value); } public T get() { Thread t = Thread.currentThread(); ThreadLocalMap map = getMap(t); if (map != null) { ThreadLocalMap.Entry e = map.getEntry(this); if (e != null) { T result = (T) e.value; return result; } } return setInitialValue(); } 2 InheritableThreadLocal InheritableThreadLocal 是 ThreadLocal 的子类 重写了 getMap 和 createMap 方法，使用线程的 inheritableThreadLocals 字段来存储值。 public class InheritableThreadLocal&lt;T&gt; extends ThreadLocal&lt;T&gt; { protected T childValue(T parentValue) { return parentValue; } ThreadLocal.ThreadLocalMap getMap(Thread t) { return t.inheritableThreadLocals; } void createMap(Thread t, T firstValue) { t.inheritableThreadLocals = new ThreadLocal.ThreadLocalMap(this, firstValue); } } 当子线程被创建时，JVM 会检查父线程的 inheritableThreadLocals，并将其浅拷贝到子线程的 inheritableThreadLocals 中。 private void init(ThreadGroup g, Runnable target, String name, long stackSize, AccessControlContext acc) { // ... if (parent.inheritableThreadLocals != null) this.inheritableThreadLocals = ThreadLocal.createInheritedMap(parent.inheritableThreadLocals); // ... } 3 线程池中的问题 由于线程池会复用线程，InheritableThreadLocal 在线程池中无法正确传递变量，因为线程的 inheritableThreadLocals 只在初始化时拷贝一次。
 ...</p>
   </div>
   <footer class="entry-footer"><span title='2024-11-13 00:00:00 +0000 UTC'>November 13, 2024</span></footer>
@@ -224,14 +249,29 @@ safe.compareAndSwapInt(this, stateOffset, expect, update); //TODO:
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">java map语法糖
+    <h2 class="entry-hint-parent">Java Map语法糖
     </h2>
   </header>
   <div class="entry-content">
-    <p>map.putIfAbsent(); map.compute(); map.computeIfAbsent(); map.computeIfPresent(); map.getOrDefault(); map.merge() </p>
+    <p>1 常见接口 map.putIfAbsent(); map.compute(); map.computeIfAbsent(); map.computeIfPresent(); map.getOrDefault(); map.merge() 2 示例代码 import java.util.HashMap; import java.util.Map; public class MapSyntaxSugarExample { public static void main(String[] args) { Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;(); // 1. putIfAbsent(K key, V value) // 如果 key 不存在或为 null，则放入 value，否则不替换 System.out.println(&#34;1. putIfAbsent:&#34;); map.putIfAbsent(&#34;apple&#34;, 5); map.putIfAbsent(&#34;apple&#34;, 10); // 不会覆盖 System.out.println(map); // {apple=5} // 2. getOrDefault(Object key, V defaultValue) // 获取 key 对应的值，如果 key 不存在则返回默认值 System.out.println(&#34;\n2. getOrDefault:&#34;); int bananaCount = map.getOrDefault(&#34;banana&#34;, 0); System.out.println(&#34;banana: &#34; &#43; bananaCount); // banana: 0 System.out.println(map); // {apple=5} // 3. compute(K key, BiFunction&lt;? super K, ? super V, ? extends V&gt; remappingFunction) // 根据 key 和旧值计算新值（函数式更新） System.out.println(&#34;\n3. compute:&#34;); map.compute(&#34;apple&#34;, (key, oldValue) -&gt; oldValue == null ? 1 : oldValue &#43; 1); System.out.println(map); // {apple=6} // 4. computeIfAbsent(K key, Function&lt;? super K, ? extends V&gt; mappingFunction) // 如果 key 不存在，则通过函数计算一个值并放入 System.out.println(&#34;\n4. computeIfAbsent:&#34;); map.computeIfAbsent(&#34;banana&#34;, k -&gt; 3); // banana 不存在，设为 3 map.computeIfAbsent(&#34;apple&#34;, k -&gt; 999); // apple 存在，不执行 System.out.println(map); // {apple=6, banana=3} // 5. computeIfPresent(K key, BiFunction&lt;? super K, ? super V, ? extends V&gt; remappingFunction) // 如果 key 存在，则用函数更新其值 System.out.println(&#34;\n5. computeIfPresent:&#34;); map.computeIfPresent(&#34;banana&#34;, (key, oldValue) -&gt; oldValue * 2); map.computeIfPresent(&#34;orange&#34;, (key, oldValue) -&gt; 10); // orange 不存在，不执行 System.out.println(map); // {apple=6, banana=6} // 6. merge(K key, V value, BiFunction&lt;? super V, ? super V, ? extends V&gt; remappingFunction) // 合并操作：如果 key 不存在，放入 value；存在则用 old 和 new 值合并 System.out.println(&#34;\n6. merge:&#34;); map.merge(&#34;apple&#34;, 4, (oldVal, newVal) -&gt; oldVal &#43; newVal); // 6 &#43; 4 = 10 map.merge(&#34;orange&#34;, 7, (oldVal, newVal) -&gt; oldVal &#43; newVal); // orange 不存在，直接 put 7 System.out.println(map); // {apple=10, banana=6, orange=7} } } </p>
   </div>
   <footer class="entry-footer"><span title='2024-11-11 00:00:00 +0000 UTC'>November 11, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to java map语法糖" href="https://eightyoliveira.github.io/java/javamap%E8%AF%AD%E6%B3%95%E7%B3%96/"></a>
+  <a class="entry-link" aria-label="post link to Java Map语法糖" href="https://eightyoliveira.github.io/java/java-map%E8%AF%AD%E6%B3%95%E7%B3%96/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">wsl2(ubuntu24)在vscode编译openjdk12
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>openjdk12 gcc版本要7以上，太高会出错
+sudo apt install gcc-7 sudo apt install g&#43;&#43;-7 # 多版本管理，数字越大优先级越高 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 50 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 30 sudo update-alternatives --install /usr/bin/g&#43;&#43; g&#43;&#43; /usr/bin/g&#43;&#43;-7 50 sudo update-alternatives --install /usr/bin/g&#43;&#43; g&#43;&#43; /usr/bin/g&#43;&#43;-11 30 make/common/MakeBase.gmk更改配置，make版本适配有问题 替换
+# Param 2 - (optional) name of file to store value in DependOnVariableHelper = \ $(strip \ $(eval -include $(call DependOnVariableFileName, $1, $2)) \ $(if $(call equals, $(strip $($1)), $(strip $($1_old))),,\ $(call MakeDir, $(dir $(call DependOnVariableFileName, $1, $2))) \ $(if $(findstring $(LOG_LEVEL), trace), \ $(info NewVariable $1: &gt;$(strip $($1))&lt;) \ $(info OldVariable $1: &gt;$(strip $($1_old))&lt;)) \ $(call WriteFile, $1_old:=$(call DoubleDollar,$(call EscapeHash,$($1))), \ $(call DependOnVariableFileName, $1, $2))) \ $(call DependOnVariableFileName, $1, $2) \ ) # Main macro # Param 2 - (optional) name of file to store value in DependOnVariableHelper = \ $(strip \ $(eval $1_filename := $(call DependOnVariableFileName, $1, $2)) \ $(if $(wildcard $($1_filename)), $(eval include $($1_filename))) \ $(if $(call equals, $(strip $($1)), $(strip $($1_old))),,\ $(call MakeDir, $(dir $($1_filename))) \ $(if $(findstring $(LOG_LEVEL), trace), \ $(info NewVariable $1: &gt;$(strip $($1))&lt;) \ $(info OldVariable $1: &gt;$(strip $($1_old))&lt;)) \ $(call WriteFile, $1_old:=$(call DoubleDollar,$(call EscapeHash,$($1))), \ $($1_filename))) \ $($1_filename) \ ) # Main macro 检查指令
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-11-01 00:00:00 +0000 UTC'>November 1, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to wsl2(ubuntu24)在vscode编译openjdk12" href="https://eightyoliveira.github.io/java/wsl2ubuntu24%E5%9C%A8vscode%E7%BC%96%E8%AF%91openjdk12/"></a>
 </article>
 
 <article class="post-entry"> 
@@ -240,7 +280,9 @@ safe.compareAndSwapInt(this, stateOffset, expect, update); //TODO:
     </h2>
   </header>
   <div class="entry-content">
-    <p>结论，比较用equals public static void main(String[] args) { Integer i3 = Integer.valueOf(3); Integer i4 = Integer.valueOf(3); System.out.println(i3==i4); Integer i5 = Integer.valueOf(5555); Integer i6 = Integer.valueOf(5555); System.out.println(i5==i6); } true false 原因 public static Integer valueOf(int i) { if (i &gt;= IntegerCache.low &amp;&amp; i &lt;= IntegerCache.high) return IntegerCache.cache[i &#43; (-IntegerCache.low)]; return new Integer(i); } private static class IntegerCache { static final int low = -128; static final int high; static final Integer cache[]; static { // high value may be configured by property int h = 127; String integerCacheHighPropValue = sun.misc.VM.getSavedProperty(&#34;java.lang.Integer.IntegerCache.high&#34;); if (integerCacheHighPropValue != null) { try { int i = parseInt(integerCacheHighPropValue); i = Math.max(i, 127); // Maximum array size is Integer.MAX_VALUE h = Math.min(i, Integer.MAX_VALUE - (-low) -1); } catch( NumberFormatException nfe) { // If the property cannot be parsed into an int, ignore it. } } high = h; cache = new Integer[(high - low) &#43; 1]; int j = low; for(int k = 0; k &lt; cache.length; k&#43;&#43;) cache[k] = new Integer(j&#43;&#43;); // range [-128, 127] must be interned (JLS7 5.1.7) assert IntegerCache.high &gt;= 127; } private IntegerCache() {} } </p>
+    <p>1 结论 直接抛出结论，Java中比较一定一定一定用equals
+public static void main(String[] args) { Integer i3 = Integer.valueOf(3); Integer i4 = Integer.valueOf(3); System.out.println(i3 == i4); Integer i5 = Integer.valueOf(5555); Integer i6 = Integer.valueOf(5555); System.out.println(i5 == i6); } true false 2 原因 看代码，copy自jdk中Integer实现
+public static Integer valueOf(int i) { if (i &gt;= IntegerCache.low &amp;&amp; i &lt;= IntegerCache.high) return IntegerCache.cache[i &#43; (-IntegerCache.low)]; return new Integer(i); } private static class IntegerCache { static final int low = -128; static final int high; static final Integer cache[]; static { // high value may be configured by property int h = 127; String integerCacheHighPropValue = sun.misc.VM.getSavedProperty(&#34;java.lang.Integer.IntegerCache.high&#34;); if (integerCacheHighPropValue != null) { try { int i = parseInt(integerCacheHighPropValue); i = Math.max(i, 127); // Maximum array size is Integer.MAX_VALUE h = Math.min(i, Integer.MAX_VALUE - (-low) - 1); } catch (NumberFormatException nfe) { // If the property cannot be parsed into an int, ignore it. } } high = h; //关键代码，自己内部搞了一个缓存 cache = new Integer[(high - low) &#43; 1]; int j = low; for (int k = 0; k &lt; cache.length; k&#43;&#43;) cache[k] = new Integer(j&#43;&#43;); // range [-128, 127] must be interned (JLS7 5.1.7) assert IntegerCache.high &gt;= 127; } private IntegerCache() { } } </p>
   </div>
   <footer class="entry-footer"><span title='2024-10-31 00:00:00 +0000 UTC'>October 31, 2024</span></footer>
   <a class="entry-link" aria-label="post link to Integer缓存" href="https://eightyoliveira.github.io/java/integer%E7%BC%93%E5%AD%98/"></a>
@@ -248,7 +290,7 @@ safe.compareAndSwapInt(this, stateOffset, expect, update); //TODO:
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
 
     <span>
         Powered by

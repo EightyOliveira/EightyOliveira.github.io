@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>JVM中Synchronized实现机制 | Home</title>
+<meta name="keywords" content="">
+<meta name="description" content="1 实现原理
+
+
+每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。
+
+
+Monitor结构：在HotSpot虚拟机中，Monitor由C&#43;&#43;实现，主要包含：
+
+_owner：指向当前持有锁的线程。
+_WaitSet：存放调用wait()方法后被阻塞的线程。
+_EntryList：存放等待获取锁的线程。
+
+
+
+2 锁升级机制
+
+无锁状态：对象刚创建时，没有线程竞争。
+偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。
+轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark
+Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。
+重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。
+
+3 字节码层面
+synchronized代码块在编译后通过monitorenter和monitorexit指令实现：
+
+monitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。
+monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。
+">
+<meta name="author" content="">
+<link rel="canonical" href="https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://eightyoliveira.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://eightyoliveira.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://eightyoliveira.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://eightyoliveira.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://eightyoliveira.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/">
+  <meta property="og:site_name" content="Home">
+  <meta property="og:title" content="JVM中Synchronized实现机制">
+  <meta property="og:description" content="1 实现原理 每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。
+Monitor结构：在HotSpot虚拟机中，Monitor由C&#43;&#43;实现，主要包含：
+_owner：指向当前持有锁的线程。 _WaitSet：存放调用wait()方法后被阻塞的线程。 _EntryList：存放等待获取锁的线程。 2 锁升级机制 无锁状态：对象刚创建时，没有线程竞争。 偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。 轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。 重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。 3 字节码层面 synchronized代码块在编译后通过monitorenter和monitorexit指令实现：
+monitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。 monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。 ">
+  <meta property="og:locale" content="zh-cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="java">
+    <meta property="article:published_time" content="2024-11-14T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-11-14T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM中Synchronized实现机制">
+<meta name="twitter:description" content="1 实现原理
+
+
+每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。
+
+
+Monitor结构：在HotSpot虚拟机中，Monitor由C&#43;&#43;实现，主要包含：
+
+_owner：指向当前持有锁的线程。
+_WaitSet：存放调用wait()方法后被阻塞的线程。
+_EntryList：存放等待获取锁的线程。
+
+
+
+2 锁升级机制
+
+无锁状态：对象刚创建时，没有线程竞争。
+偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。
+轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark
+Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。
+重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。
+
+3 字节码层面
+synchronized代码块在编译后通过monitorenter和monitorexit指令实现：
+
+monitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。
+monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。
+">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Javas",
+      "item": "https://eightyoliveira.github.io/java/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "JVM中Synchronized实现机制",
+      "item": "https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "JVM中Synchronized实现机制",
+  "name": "JVM中Synchronized实现机制",
+  "description": "1 实现原理 每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。\nMonitor结构：在HotSpot虚拟机中，Monitor由C++实现，主要包含：\n_owner：指向当前持有锁的线程。 _WaitSet：存放调用wait()方法后被阻塞的线程。 _EntryList：存放等待获取锁的线程。 2 锁升级机制 无锁状态：对象刚创建时，没有线程竞争。 偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。 轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。 重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。 3 字节码层面 synchronized代码块在编译后通过monitorenter和monitorexit指令实现：\nmonitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。 monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。 ",
+  "keywords": [
+    
+  ],
+  "articleBody": "1 实现原理 每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。\nMonitor结构：在HotSpot虚拟机中，Monitor由C++实现，主要包含：\n_owner：指向当前持有锁的线程。 _WaitSet：存放调用wait()方法后被阻塞的线程。 _EntryList：存放等待获取锁的线程。 2 锁升级机制 无锁状态：对象刚创建时，没有线程竞争。 偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。 轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。 重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。 3 字节码层面 synchronized代码块在编译后通过monitorenter和monitorexit指令实现：\nmonitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。 monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。 ",
+  "wordCount" : "20",
+  "inLanguage": "en",
+  "datePublished": "2024-11-14T00:00:00Z",
+  "dateModified": "2024-11-14T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://eightyoliveira.github.io/java/jvm%E4%B8%ADsynchronized%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Home",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://eightyoliveira.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://eightyoliveira.github.io/java" title="Java">
+                    <span>Java</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span>Web</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      JVM中Synchronized实现机制
+    </h1>
+    <div class="post-meta"><span title='2024-11-14 00:00:00 +0000 UTC'>November 14, 2024</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="1-实现原理">1 实现原理<a hidden class="anchor" aria-hidden="true" href="#1-实现原理">#</a></h1>
+<ul>
+<li>
+<p>每个Java对象都关联一个监视器锁（Monitor）。当线程进入synchronized代码块时，必须先获取该对象的Monitor，执行完后释放。</p>
+</li>
+<li>
+<p>Monitor结构：在HotSpot虚拟机中，Monitor由C++实现，主要包含：</p>
+<ul>
+<li>_owner：指向当前持有锁的线程。</li>
+<li>_WaitSet：存放调用wait()方法后被阻塞的线程。</li>
+<li>_EntryList：存放等待获取锁的线程。</li>
+</ul>
+</li>
+</ul>
+<h1 id="2-锁升级机制">2 锁升级机制<a hidden class="anchor" aria-hidden="true" href="#2-锁升级机制">#</a></h1>
+<ul>
+<li>无锁状态：对象刚创建时，没有线程竞争。</li>
+<li>偏向锁：适用于只有一个线程访问同步块的场景。线程第一次进入时，JVM将对象头的Mark Word设置为偏向该线程ID。后续该线程进入无需再同步，直接执行。</li>
+<li>轻量级锁：当有第二个线程竞争时，偏向锁升级为轻量级锁。线程通过CAS操作将Mark
+Word复制到自己的栈帧中，并尝试替换对象头为指向锁记录的指针。成功则获取锁，失败则自旋等待。</li>
+<li>重量级锁：当竞争加剧（自旋超过一定次数），轻量级锁升级为重量级锁。此时未获取锁的线程进入阻塞状态，由操作系统调度，开销大但避免CPU空转。</li>
+</ul>
+<h1 id="3-字节码层面">3 字节码层面<a hidden class="anchor" aria-hidden="true" href="#3-字节码层面">#</a></h1>
+<p>synchronized代码块在编译后通过monitorenter和monitorexit指令实现：</p>
+<ul>
+<li>monitorenter：每个线程进入同步块时执行，尝试获取对象Monitor。</li>
+<li>monitorexit：每个线程退出同步块时执行，释放Monitor。即使发生异常，也会通过异常表确保执行。</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

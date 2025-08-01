@@ -5,10 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx） | 我的博客</title>
+<title>rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx） | Home</title>
 <meta name="keywords" content="">
 <meta name="description" content="0 虚拟机配置
-RockyLinux9.4 64 mini  2*2 4G
+RockyLinux9.4 64 mini 2*2 4G
 JDK1.8(其他版本加jvm参数)
 RocketMQ 5.3
 RockyLinux1 192.164.64.134 m1 n2 n1 p1
@@ -33,7 +33,7 @@ ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release
 PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin
 export PATH
 source /etc/profile
-2配置broke文件
+2 配置broke文件
 RockyLinux1配置
 vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
 #所属集群名字
@@ -145,7 +145,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
 
     </style>
 </noscript><meta property="og:url" content="https://eightyoliveira.github.io/web/rocketmqcluster%E6%90%AD%E5%BB%BA%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95sync-2m-2s-2namesrv-2proyx/">
-  <meta property="og:site_name" content="我的博客">
+  <meta property="og:site_name" content="Home">
   <meta property="og:title" content="rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）">
   <meta property="og:description" content="0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G
 JDK1.8(其他版本加jvm参数)
@@ -153,7 +153,7 @@ RocketMQ 5.3
 RockyLinux1 192.164.64.134 m1 n2 n1 p1
 RockyLinux2 192.164.64.135 m2 n1 n2 p2
 nat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关
-vi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2配置broke文件 RockyLinux1配置
+vi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2 配置broke文件 RockyLinux1配置
 vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
 #所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，&gt;0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
   <meta property="og:locale" content="zh-cn">
@@ -164,7 +164,7 @@ vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）">
 <meta name="twitter:description" content="0 虚拟机配置
-RockyLinux9.4 64 mini  2*2 4G
+RockyLinux9.4 64 mini 2*2 4G
 JDK1.8(其他版本加jvm参数)
 RocketMQ 5.3
 RockyLinux1 192.164.64.134 m1 n2 n1 p1
@@ -189,7 +189,7 @@ ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release
 PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin
 export PATH
 source /etc/profile
-2配置broke文件
+2 配置broke文件
 RockyLinux1配置
 vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
 #所属集群名字
@@ -281,12 +281,12 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
   "@type": "BlogPosting",
   "headline": "rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）",
   "name": "rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）",
-  "description": "0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G\nJDK1.8(其他版本加jvm参数)\nRocketMQ 5.3\nRockyLinux1 192.164.64.134 m1 n2 n1 p1\nRockyLinux2 192.164.64.135 m2 n1 n2 p2\nnat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关\nvi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2配置broke文件 RockyLinux1配置\nvi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u0026gt;0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties\n",
+  "description": "0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G\nJDK1.8(其他版本加jvm参数)\nRocketMQ 5.3\nRockyLinux1 192.164.64.134 m1 n2 n1 p1\nRockyLinux2 192.164.64.135 m2 n1 n2 p2\nnat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关\nvi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2 配置broke文件 RockyLinux1配置\nvi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u0026gt;0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties\n",
   "keywords": [
     
   ],
-  "articleBody": "0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G\nJDK1.8(其他版本加jvm参数)\nRocketMQ 5.3\nRockyLinux1 192.164.64.134 m1 n2 n1 p1\nRockyLinux2 192.164.64.135 m2 n1 n2 p2\nnat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关\nvi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2配置broke文件 RockyLinux1配置\nvi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u003e0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-b #0 表示 Master，\u003e0 表示 Slave brokerId=1 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=11011 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store_s #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store_s/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store_s/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store_s/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store_s/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store_s/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SLAVE #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=ASYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 RockyLinux2配置 broker-b.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-b #0 表示 Master，\u003e0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 broker-a-s.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u003e0 表示 Slave brokerId=1 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=11011 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store_s #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store_s/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store_s/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store_s/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store_s/checkpoint #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SLAVE #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=ASYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 3修改borke的jvm参数 vim /usr/local/rocketmq/bin/runbroker.sh 根据内存大小对JVM参数进行调整\nJAVA_OPT=\"${JAVA_OPT} -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m\"\n4配置Proxy vi /usr/local/rocketmq/conf/rmq-proxy.json { \"rocketMQClusterName\": \"rocketmq-cluster\", \"remotingListenPort\":28080, \"grpcServerPort\":28081 } 5启动停止脚本 ROCKETMQ_DIR=/usr/local/rocketmq CONFIG_DIR=$ROCKETMQ_DIR/conf/2m-2s-async NAMESRV_ADDRESSES=\"192.168.64.134:9876;192.168.64.135:9876\" nohup sh $ROCKETMQ_DIR/bin/mqnamesrv \u003e \"/usr/local/rocketmq/logs/mqnamesrv.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh $ROCKETMQ_DIR/bin/mqbroker -c $CONFIG_DIR/broker-a-s.properties \u003e \"/usr/local/rocketmq/logs/mqbroker.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh $ROCKETMQ_DIR/bin/mqbroker -c $CONFIG_DIR/broker-b.properties \u003e \"/usr/local/rocketmq/logs/mqbroker-s.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh \"${ROCKETMQ_DIR}/bin/mqproxy\" -n \"${NAMESRV_ADDRESSES}\" -pc \"${ROCKETMQ_DIR}/conf/rmq-proxy.json\" \u003e \"${ROCKETMQ_DIR}/logs/mqproxy.log\" 2\u003e\u00261 \u0026 sh bin/mqshutdown namesrv sh bin/mqshutdown broker ",
-  "wordCount" : "477",
+  "articleBody": "0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G\nJDK1.8(其他版本加jvm参数)\nRocketMQ 5.3\nRockyLinux1 192.164.64.134 m1 n2 n1 p1\nRockyLinux2 192.164.64.135 m2 n1 n2 p2\nnat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关\nvi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2 配置broke文件 RockyLinux1配置\nvi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u003e0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-b #0 表示 Master，\u003e0 表示 Slave brokerId=1 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=11011 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store_s #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store_s/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store_s/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store_s/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store_s/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store_s/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SLAVE #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=ASYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 RockyLinux2配置 broker-b.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-b #0 表示 Master，\u003e0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 broker-a-s.properties\n#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，\u003e0 表示 Slave brokerId=1 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=11011 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store_s #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store_s/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store_s/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store_s/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store_s/checkpoint #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SLAVE #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=ASYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 3 修改borke的jvm参数 vim /usr/local/rocketmq/bin/runbroker.sh 根据内存大小对JVM参数进行调整\nJAVA_OPT=\"${JAVA_OPT} -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m\"\n4 配置Proxy vi /usr/local/rocketmq/conf/rmq-proxy.json { \"rocketMQClusterName\": \"rocketmq-cluster\", \"remotingListenPort\":28080, \"grpcServerPort\":28081 } 5 启动停止脚本 ROCKETMQ_DIR=/usr/local/rocketmq CONFIG_DIR=$ROCKETMQ_DIR/conf/2m-2s-async NAMESRV_ADDRESSES=\"192.168.64.134:9876;192.168.64.135:9876\" nohup sh $ROCKETMQ_DIR/bin/mqnamesrv \u003e \"/usr/local/rocketmq/logs/mqnamesrv.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh $ROCKETMQ_DIR/bin/mqbroker -c $CONFIG_DIR/broker-a-s.properties \u003e \"/usr/local/rocketmq/logs/mqbroker.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh $ROCKETMQ_DIR/bin/mqbroker -c $CONFIG_DIR/broker-b.properties \u003e \"/usr/local/rocketmq/logs/mqbroker-s.log\" 2\u003e\u00261 \u0026 sleep 5 nohup sh \"${ROCKETMQ_DIR}/bin/mqproxy\" -n \"${NAMESRV_ADDRESSES}\" -pc \"${ROCKETMQ_DIR}/conf/rmq-proxy.json\" \u003e \"${ROCKETMQ_DIR}/logs/mqproxy.log\" 2\u003e\u00261 \u0026 sh bin/mqshutdown namesrv sh bin/mqshutdown broker ",
+  "wordCount" : "481",
   "inLanguage": "en",
   "datePublished": "2024-09-09T00:00:00Z",
   "dateModified": "2024-09-09T00:00:00Z",
@@ -296,7 +296,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
   },
   "publisher": {
     "@type": "Organization",
-    "name": "我的博客",
+    "name": "Home",
     "logo": {
       "@type": "ImageObject",
       "url": "https://eightyoliveira.github.io/favicon.ico"
@@ -321,7 +321,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -352,23 +352,28 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/git" title="git">
-                    <span>git</span>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span>Web</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/web" title="web">
-                    <span>web</span>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/ai" title="ai">
-                    <span>ai</span>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
                 </a>
             </li>
         </ul>
@@ -387,7 +392,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
 </div>
   </header> 
   <div class="post-content"><h1 id="0-虚拟机配置">0 虚拟机配置<a hidden class="anchor" aria-hidden="true" href="#0-虚拟机配置">#</a></h1>
-<p>RockyLinux9.4 64 mini  2*2 4G</p>
+<p>RockyLinux9.4 64 mini 2*2 4G</p>
 <p>JDK1.8(其他版本加jvm参数)</p>
 <p>RocketMQ 5.3</p>
 <p>RockyLinux1 192.164.64.134 m1 n2 n1 p1</p>
@@ -412,7 +417,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
 </span></span><span style="display:flex;"><span>PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin
 </span></span><span style="display:flex;"><span>export PATH
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>source /etc/profile
-</span></span></code></pre></div><h1 id="2配置broke文件">2配置broke文件<a hidden class="anchor" aria-hidden="true" href="#2配置broke文件">#</a></h1>
+</span></span></code></pre></div><h1 id="2-配置broke文件">2 配置broke文件<a hidden class="anchor" aria-hidden="true" href="#2-配置broke文件">#</a></h1>
 <p>RockyLinux1配置</p>
 <p>vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#75715e">#所属集群名字</span>
@@ -656,18 +661,18 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
 </span></span><span style="display:flex;"><span><span style="color:#75715e">#sendMessageThreadPoolNums=128</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">#拉消息线程池数量</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">#pullMessageThreadPoolNums=128</span>
-</span></span></code></pre></div><h1 id="3修改borke的jvm参数">3修改borke的jvm参数<a hidden class="anchor" aria-hidden="true" href="#3修改borke的jvm参数">#</a></h1>
+</span></span></code></pre></div><h1 id="3-修改borke的jvm参数">3 修改borke的jvm参数<a hidden class="anchor" aria-hidden="true" href="#3-修改borke的jvm参数">#</a></h1>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>vim /usr/local/rocketmq/bin/runbroker.sh
 </span></span></code></pre></div><p>根据内存大小对JVM参数进行调整</p>
 <p>JAVA_OPT=&quot;${JAVA_OPT} -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</p>
-<h1 id="4配置proxy">4配置Proxy<a hidden class="anchor" aria-hidden="true" href="#4配置proxy">#</a></h1>
+<h1 id="4-配置proxy">4 配置Proxy<a hidden class="anchor" aria-hidden="true" href="#4-配置proxy">#</a></h1>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>vi /usr/local/rocketmq/conf/rmq-proxy.json
 </span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#f92672">{</span>
 </span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;rocketMQClusterName&#34;</span>: <span style="color:#e6db74">&#34;rocketmq-cluster&#34;</span>,
 </span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;remotingListenPort&#34;</span>:28080,
 </span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#34;grpcServerPort&#34;</span>:28081
 </span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
-</span></span></code></pre></div><h1 id="5启动停止脚本">5启动停止脚本<a hidden class="anchor" aria-hidden="true" href="#5启动停止脚本">#</a></h1>
+</span></span></code></pre></div><h1 id="5-启动停止脚本">5 启动停止脚本<a hidden class="anchor" aria-hidden="true" href="#5-启动停止脚本">#</a></h1>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>ROCKETMQ_DIR<span style="color:#f92672">=</span>/usr/local/rocketmq
 </span></span><span style="display:flex;"><span>CONFIG_DIR<span style="color:#f92672">=</span>$ROCKETMQ_DIR/conf/2m-2s-async
 </span></span><span style="display:flex;"><span>NAMESRV_ADDRESSES<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;192.168.64.134:9876;192.168.64.135:9876&#34;</span>
@@ -694,7 +699,7 @@ vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties">
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
 
     <span>
         Powered by

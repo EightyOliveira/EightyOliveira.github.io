@@ -5,21 +5,33 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Mysql--对varchar字段用int数值来查询的问题 | 我的博客</title>
+<title>MySQL--对varchar字段用int数值来查询的问题 | Home</title>
 <meta name="keywords" content="">
-<meta name="description" content="例子
-age是varchar类型
-select * from table_name where age=&#39;1111111111111111111111111111111&#39;
-select * from table_name where age=1111111111111111111111111111111
-如果不加单引号，会查出其他很多无关数据
+<meta name="description" content="1 示例
+age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据
+select *
+from table_name
+where age = &#39;123&#39;
+select *
+from table_name
+where age = 123
+2 原因
 官网原文
 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation
-从其他copy过来的翻译
-在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。
-字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，&lsquo;ab123’取到的值是0）
-在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。
-如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。
-PS:oracle中不会出现这个问题">
+翻译与解释
+在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。
+字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：&lsquo;123abc&rsquo; 转成
+123，&lsquo;ab123&rsquo; 转成 0。
+当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：
+
+精度丢失：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。
+错误匹配：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。
+索引失效：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。
+
+因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。
+
+对比：Oracle
+Oracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。">
 <meta name="author" content="">
 <link rel="canonical" href="https://eightyoliveira.github.io/database/mysql--%E5%AF%B9varchar%E5%AD%97%E6%AE%B5%E7%94%A8int%E6%95%B0%E5%80%BC%E6%9D%A5%E6%9F%A5%E8%AF%A2%E7%9A%84%E9%97%AE%E9%A2%98/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
@@ -68,37 +80,48 @@ PS:oracle中不会出现这个问题">
 
     </style>
 </noscript><meta property="og:url" content="https://eightyoliveira.github.io/database/mysql--%E5%AF%B9varchar%E5%AD%97%E6%AE%B5%E7%94%A8int%E6%95%B0%E5%80%BC%E6%9D%A5%E6%9F%A5%E8%AF%A2%E7%9A%84%E9%97%AE%E9%A2%98/">
-  <meta property="og:site_name" content="我的博客">
-  <meta property="og:title" content="Mysql--对varchar字段用int数值来查询的问题">
-  <meta property="og:description" content="例子 age是varchar类型
-select * from table_name where age=&#39;1111111111111111111111111111111&#39; select * from table_name where age=1111111111111111111111111111111 如果不加单引号，会查出其他很多无关数据
-官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation
-从其他copy过来的翻译
-在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。
-字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，‘ab123’取到的值是0）
-在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。
-如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。
-PS:oracle中不会出现这个问题">
+  <meta property="og:site_name" content="Home">
+  <meta property="og:title" content="MySQL--对varchar字段用int数值来查询的问题">
+  <meta property="og:description" content="1 示例 age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据
+select * from table_name where age = &#39;123&#39; select * from table_name where age = 123 2 原因 官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation
+翻译与解释 在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。
+字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：‘123abc’ 转成 123，‘ab123’ 转成 0。
+当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：
+精度丢失：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。 错误匹配：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。 索引失效：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。 因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。
+对比：Oracle
+Oracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。">
   <meta property="og:locale" content="zh-cn">
   <meta property="og:type" content="article">
     <meta property="article:section" content="database">
     <meta property="article:published_time" content="2024-10-06T00:00:00+00:00">
     <meta property="article:modified_time" content="2024-10-06T00:00:00+00:00">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Mysql--对varchar字段用int数值来查询的问题">
-<meta name="twitter:description" content="例子
-age是varchar类型
-select * from table_name where age=&#39;1111111111111111111111111111111&#39;
-select * from table_name where age=1111111111111111111111111111111
-如果不加单引号，会查出其他很多无关数据
+<meta name="twitter:title" content="MySQL--对varchar字段用int数值来查询的问题">
+<meta name="twitter:description" content="1 示例
+age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据
+select *
+from table_name
+where age = &#39;123&#39;
+select *
+from table_name
+where age = 123
+2 原因
 官网原文
 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation
-从其他copy过来的翻译
-在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。
-字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，&lsquo;ab123’取到的值是0）
-在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。
-如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。
-PS:oracle中不会出现这个问题">
+翻译与解释
+在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。
+字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：&lsquo;123abc&rsquo; 转成
+123，&lsquo;ab123&rsquo; 转成 0。
+当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：
+
+精度丢失：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。
+错误匹配：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。
+索引失效：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。
+
+因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。
+
+对比：Oracle
+Oracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。">
 
 
 <script type="application/ld+json">
@@ -115,7 +138,7 @@ PS:oracle中不会出现这个问题">
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "Mysql--对varchar字段用int数值来查询的问题",
+      "name": "MySQL--对varchar字段用int数值来查询的问题",
       "item": "https://eightyoliveira.github.io/database/mysql--%E5%AF%B9varchar%E5%AD%97%E6%AE%B5%E7%94%A8int%E6%95%B0%E5%80%BC%E6%9D%A5%E6%9F%A5%E8%AF%A2%E7%9A%84%E9%97%AE%E9%A2%98/"
     }
   ]
@@ -125,14 +148,14 @@ PS:oracle中不会出现这个问题">
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Mysql--对varchar字段用int数值来查询的问题",
-  "name": "Mysql--对varchar字段用int数值来查询的问题",
-  "description": "例子 age是varchar类型\nselect * from table_name where age=\u0026#39;1111111111111111111111111111111\u0026#39; select * from table_name where age=1111111111111111111111111111111 如果不加单引号，会查出其他很多无关数据\n官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation\n从其他copy过来的翻译\n在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。\n字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，\u0026lsquo;ab123’取到的值是0）\n在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。\n如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。\nPS:oracle中不会出现这个问题\n",
+  "headline": "MySQL--对varchar字段用int数值来查询的问题",
+  "name": "MySQL--对varchar字段用int数值来查询的问题",
+  "description": "1 示例 age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据\nselect * from table_name where age = \u0026#39;123\u0026#39; select * from table_name where age = 123 2 原因 官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation\n翻译与解释 在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。\n字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：\u0026lsquo;123abc\u0026rsquo; 转成 123，\u0026lsquo;ab123\u0026rsquo; 转成 0。\n当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：\n精度丢失：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。 错误匹配：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。 索引失效：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。 因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。\n对比：Oracle\nOracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。\n",
   "keywords": [
     
   ],
-  "articleBody": "例子 age是varchar类型\nselect * from table_name where age='1111111111111111111111111111111' select * from table_name where age=1111111111111111111111111111111 如果不加单引号，会查出其他很多无关数据\n官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation\n从其他copy过来的翻译\n在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。\n字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，‘ab123’取到的值是0）\n在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。\n如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。\nPS:oracle中不会出现这个问题\n",
-  "wordCount" : "35",
+  "articleBody": "1 示例 age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据\nselect * from table_name where age = '123' select * from table_name where age = 123 2 原因 官网原文 MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation\n翻译与解释 在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。\n字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：‘123abc’ 转成 123，‘ab123’ 转成 0。\n当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：\n精度丢失：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。 错误匹配：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。 索引失效：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。 因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。\n对比：Oracle\nOracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。\n",
+  "wordCount" : "49",
   "inLanguage": "en",
   "datePublished": "2024-10-06T00:00:00Z",
   "dateModified": "2024-10-06T00:00:00Z",
@@ -142,7 +165,7 @@ PS:oracle中不会出现这个问题">
   },
   "publisher": {
     "@type": "Organization",
-    "name": "我的博客",
+    "name": "Home",
     "logo": {
       "@type": "ImageObject",
       "url": "https://eightyoliveira.github.io/favicon.ico"
@@ -167,7 +190,7 @@ PS:oracle中不会出现这个问题">
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -198,23 +221,28 @@ PS:oracle中不会出现这个问题">
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/git" title="git">
-                    <span>git</span>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span>Web</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/web" title="web">
-                    <span>web</span>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/ai" title="ai">
-                    <span>ai</span>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
                 </a>
             </li>
         </ul>
@@ -226,25 +254,37 @@ PS:oracle中不会出现这个问题">
   <header class="post-header">
     
     <h1 class="post-title entry-hint-parent">
-      Mysql--对varchar字段用int数值来查询的问题
+      MySQL--对varchar字段用int数值来查询的问题
     </h1>
     <div class="post-meta"><span title='2024-10-06 00:00:00 +0000 UTC'>October 6, 2024</span>
 
 </div>
   </header> 
-  <div class="post-content"><h1 id="例子">例子<a hidden class="anchor" aria-hidden="true" href="#例子">#</a></h1>
-<p>age是varchar类型</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> <span style="color:#66d9ef">table_name</span> <span style="color:#66d9ef">where</span> age<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;1111111111111111111111111111111&#39;</span>
-</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> <span style="color:#66d9ef">table_name</span> <span style="color:#66d9ef">where</span> age<span style="color:#f92672">=</span><span style="color:#ae81ff">1111111111111111111111111111111</span>
-</span></span></code></pre></div><p>如果不加单引号，会查出其他很多无关数据</p>
-<h1 id="官网原文">官网原文<a hidden class="anchor" aria-hidden="true" href="#官网原文">#</a></h1>
+  <div class="post-content"><h1 id="1-示例">1 示例<a hidden class="anchor" aria-hidden="true" href="#1-示例">#</a></h1>
+<p>age是varchar类型，在下面两条sql中，第二条如果不加单引号，会查出其他很多无关数据</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">from</span> <span style="color:#66d9ef">table_name</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">where</span> age <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;123&#39;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">from</span> <span style="color:#66d9ef">table_name</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">where</span> age <span style="color:#f92672">=</span> <span style="color:#ae81ff">123</span>
+</span></span></code></pre></div><h1 id="2-原因">2 原因<a hidden class="anchor" aria-hidden="true" href="#2-原因">#</a></h1>
+<h3 id="官网原文">官网原文<a hidden class="anchor" aria-hidden="true" href="#官网原文">#</a></h3>
 <p><a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html">MySQL :: MySQL 5.7 Reference Manual :: 12.3 Type Conversion in Expression Evaluation</a></p>
-<p>从其他copy过来的翻译</p>
-<p>在字符串和数值作比较的时候，字符串和数值都会转换成浮点数进行比较。</p>
-<p>字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到截取到的不是数字是其他字符为止。若开头不是数字，那么转换数值类型的结果就直接取0。（如’123abc’转成的值是123，&lsquo;ab123’取到的值是0）</p>
-<p>在上述中，我的字符串存储的是18位varchar类型。由于在转换成浮点数的时候，数值太大会自动转换成科学计数法，而且浮点数的精度不准确，都是取近似值，所以会出现意外的内容。也就是说我的查询sql条件在用数值类型时，由于数值太大了，所以在转换成浮点数的时候变成了科学计数法，同理被查询的字段也被转换成了浮点数的科学计数法，又由于浮点数精度的不准确，导致查询结果出现不准确。</p>
-<p>如果用了字符串字段，在查询的时候最好不要用数值（如整数之类的）来查询，因为如果用数值查询，也就是如上面说的，MySql会自动把表达式中的值都转换成浮点数。而这里索引字段varchar类型进行自动转换成了浮点数，导致了索引失效。</p>
-<p>PS:oracle中不会出现这个问题</p>
+<h3 id="翻译与解释">翻译与解释<a hidden class="anchor" aria-hidden="true" href="#翻译与解释">#</a></h3>
+<p>在字符串和数值作比较的时候，MySQL会将字符串转换为DOUBLE类型（浮点数）进行比较。</p>
+<p>字符串在转浮点数时，如果字符串开头是数字，那就一直截取，直到遇到非数字字符为止。若开头不是数字，转换结果为0。例如：&lsquo;123abc&rsquo; 转成
+123，&lsquo;ab123&rsquo; 转成 0。</p>
+<p>当varchar字段存储的是长数字字符串（如18位）时，问题尤为突出：</p>
+<ol>
+<li><strong>精度丢失</strong>：大整数转换为浮点数时，会使用科学计数法表示，且浮点数精度有限，无法精确表示超长整数，导致末尾数字被舍入或截断。</li>
+<li><strong>错误匹配</strong>：查询条件中的大整数和数据库中存储的长字符串，在转换为浮点数后可能变成相同的近似值，从而匹配到本不该匹配的记录。</li>
+<li><strong>索引失效</strong>：当使用整数查询varchar字段时，MySQL需要对索引字段的值进行隐式类型转换（相当于对字段使用了函数），这会导致该字段上的索引无法被使用，查询性能下降。</li>
+</ol>
+<p>因此，对于varchar类型的字段，在查询时应始终使用字符串（即用引号括起来）进行匹配，避免使用整数数值，以保证查询的准确性和性能。</p>
+<hr>
+<p>对比：Oracle</p>
+<p>Oracle数据库在处理此类比较时的行为与MySQL不同，通常不会出现因隐式转换导致的精度丢失和错误匹配问题。</p>
 
 
   </div>
@@ -257,7 +297,7 @@ PS:oracle中不会出现这个问题">
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
 
     <span>
         Powered by

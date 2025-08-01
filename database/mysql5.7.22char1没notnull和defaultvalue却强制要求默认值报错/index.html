@@ -5,10 +5,16 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错 | 我的博客</title>
+<title>MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错 | Home</title>
 <meta name="keywords" content="">
-<meta name="description" content="解决方案: 把类型改为varchar，成功解决
-原因分析:">
+<meta name="description" content="1 问题描述
+在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）
+并未设置not null和default value，却强制要求默认值
+ERROR 1364 (HY000): Field &lsquo;xxxxx&rsquo; doesn&rsquo;t have a default value
+2 解决方案
+把类型改为varchar，成功解决
+3 原因分析
+未知">
 <meta name="author" content="">
 <link rel="canonical" href="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
@@ -57,19 +63,28 @@
 
     </style>
 </noscript><meta property="og:url" content="https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/">
-  <meta property="og:site_name" content="我的博客">
-  <meta property="og:title" content="Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错">
-  <meta property="og:description" content="解决方案: 把类型改为varchar，成功解决
-原因分析:">
+  <meta property="og:site_name" content="Home">
+  <meta property="og:title" content="MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错">
+  <meta property="og:description" content="1 问题描述 在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）
+并未设置not null和default value，却强制要求默认值
+ERROR 1364 (HY000): Field ‘xxxxx’ doesn’t have a default value
+2 解决方案 把类型改为varchar，成功解决
+3 原因分析 未知">
   <meta property="og:locale" content="zh-cn">
   <meta property="og:type" content="article">
     <meta property="article:section" content="database">
     <meta property="article:published_time" content="2024-09-20T00:00:00+00:00">
     <meta property="article:modified_time" content="2024-09-20T00:00:00+00:00">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错">
-<meta name="twitter:description" content="解决方案: 把类型改为varchar，成功解决
-原因分析:">
+<meta name="twitter:title" content="MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错">
+<meta name="twitter:description" content="1 问题描述
+在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）
+并未设置not null和default value，却强制要求默认值
+ERROR 1364 (HY000): Field &lsquo;xxxxx&rsquo; doesn&rsquo;t have a default value
+2 解决方案
+把类型改为varchar，成功解决
+3 原因分析
+未知">
 
 
 <script type="application/ld+json">
@@ -86,7 +101,7 @@
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
+      "name": "MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错",
       "item": "https://eightyoliveira.github.io/database/mysql5.7.22char1%E6%B2%A1notnull%E5%92%8Cdefaultvalue%E5%8D%B4%E5%BC%BA%E5%88%B6%E8%A6%81%E6%B1%82%E9%BB%98%E8%AE%A4%E5%80%BC%E6%8A%A5%E9%94%99/"
     }
   ]
@@ -96,14 +111,14 @@
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
-  "name": "Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错",
-  "description": "解决方案: 把类型改为varchar，成功解决\n原因分析:\n",
+  "headline": "MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错",
+  "name": "MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错",
+  "description": "1 问题描述 在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）\n并未设置not null和default value，却强制要求默认值\nERROR 1364 (HY000): Field \u0026lsquo;xxxxx\u0026rsquo; doesn\u0026rsquo;t have a default value\n2 解决方案 把类型改为varchar，成功解决\n3 原因分析 未知\n",
   "keywords": [
     
   ],
-  "articleBody": "解决方案: 把类型改为varchar，成功解决\n原因分析:\n",
-  "wordCount" : "3",
+  "articleBody": "1 问题描述 在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）\n并未设置not null和default value，却强制要求默认值\nERROR 1364 (HY000): Field ‘xxxxx’ doesn’t have a default value\n2 解决方案 把类型改为varchar，成功解决\n3 原因分析 未知\n",
+  "wordCount" : "22",
   "inLanguage": "en",
   "datePublished": "2024-09-20T00:00:00Z",
   "dateModified": "2024-09-20T00:00:00Z",
@@ -113,7 +128,7 @@
   },
   "publisher": {
     "@type": "Organization",
-    "name": "我的博客",
+    "name": "Home",
     "logo": {
       "@type": "ImageObject",
       "url": "https://eightyoliveira.github.io/favicon.ico"
@@ -138,7 +153,7 @@
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -169,23 +184,28 @@
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/git" title="git">
-                    <span>git</span>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span>Web</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/web" title="web">
-                    <span>web</span>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/ai" title="ai">
-                    <span>ai</span>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
                 </a>
             </li>
         </ul>
@@ -197,14 +217,20 @@
   <header class="post-header">
     
     <h1 class="post-title entry-hint-parent">
-      Mysql（5.7.22）char(1)没notnull和defaultvalue，却强制要求默认值报错
+      MySQL（5.7.22）char(1)类型没not null和default value，却强制要求默认值报错
     </h1>
     <div class="post-meta"><span title='2024-09-20 00:00:00 +0000 UTC'>September 20, 2024</span>
 
 </div>
   </header> 
-  <div class="post-content"><p>解决方案: 把类型改为varchar，成功解决</p>
-<p>原因分析:</p>
+  <div class="post-content"><h1 id="1-问题描述">1 问题描述<a hidden class="anchor" aria-hidden="true" href="#1-问题描述">#</a></h1>
+<p>在一次开发过程中，一个状态字段char(1)类型Mysql（5.7.22）<br>
+并未设置not null和default value，却强制要求默认值<br>
+ERROR 1364 (HY000): Field &lsquo;xxxxx&rsquo; doesn&rsquo;t have a default value</p>
+<h1 id="2-解决方案">2 解决方案<a hidden class="anchor" aria-hidden="true" href="#2-解决方案">#</a></h1>
+<p>把类型改为varchar，成功解决</p>
+<h1 id="3-原因分析">3 原因分析<a hidden class="anchor" aria-hidden="true" href="#3-原因分析">#</a></h1>
+<p>未知</p>
 
 
   </div>
@@ -217,7 +243,7 @@
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
 
     <span>
         Powered by

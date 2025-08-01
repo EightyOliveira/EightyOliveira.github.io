@@ -5,9 +5,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Webs | 我的博客</title>
+<title>Webs | Home</title>
 <meta name="keywords" content="">
-<meta name="description" content="Webs - 我的博客">
+<meta name="description" content="Webs - Home">
 <meta name="author" content="">
 <link rel="canonical" href="https://eightyoliveira.github.io/web/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
@@ -57,7 +57,7 @@
 
     </style>
 </noscript><meta property="og:url" content="https://eightyoliveira.github.io/web/">
-  <meta property="og:site_name" content="我的博客">
+  <meta property="og:site_name" content="Home">
   <meta property="og:title" content="Webs">
   <meta property="og:locale" content="zh-cn">
   <meta property="og:type" content="website">
@@ -97,7 +97,7 @@
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://eightyoliveira.github.io/" accesskey="h" title="我的博客 (Alt + H)">我的博客</a>
+            <a href="https://eightyoliveira.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -128,23 +128,28 @@
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/git" title="git">
-                    <span>git</span>
+                <a href="https://eightyoliveira.github.io/web" title="Web">
+                    <span class="active">Web</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/web" title="web">
-                    <span class="active">web</span>
+                <a href="https://eightyoliveira.github.io/ai" title="AI">
+                    <span>AI</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/ai" title="ai">
-                    <span>ai</span>
+                <a href="https://eightyoliveira.github.io/database" title="DB">
+                    <span>DB</span>
                 </a>
             </li>
             <li>
-                <a href="https://eightyoliveira.github.io/database" title="database">
-                    <span>database</span>
+                <a href="https://eightyoliveira.github.io/py" title="Py">
+                    <span>Py</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://eightyoliveira.github.io/other" title="Other">
+                    <span>Other</span>
                 </a>
             </li>
         </ul>
@@ -153,127 +158,10 @@
 <main class="main"> 
 <header class="page-header">
   <h1>
-    Webs
+
+
   </h1>
 </header>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">@Accessors(chain=true)后导致cglib的beanCopier复制bean失败
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>直接丢结论，注解链式调用返回结果是this，但cglib通过生成对象调用set方法时候，会有一个校验set函数的返回值类型是不是void类型，所有cglib copy会失败
-</p>
-  </div>
-  <footer class="entry-footer"><span title='2024-10-06 00:00:00 +0000 UTC'>October 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to @Accessors(chain=true)后导致cglib的beanCopier复制bean失败" href="https://eightyoliveira.github.io/web/@accessorschaintrue%E5%90%8E%E5%AF%BC%E8%87%B4cglib%E7%9A%84beancopier%E5%A4%8D%E5%88%B6bean%E5%A4%B1%E8%B4%A5/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">JIT和AOT
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>编译型语言和解释型语言 编程语言主要分两大类，编译型语言，例如C/C&#43;&#43;、Go，解释型语言例如Python。特例 CINT、GraalVM。
-编译型语言，将一门语言编译为可执行文件，可执行文件是OS和硬件高度绑定的机器码，特点是快。
-解释型语言，则直接将语言编写的程序在解释器上，机器上面有自己解释器，每次运行时逐行翻译成机器码进行运行，每次运行通过运行，特点是跨平台等。
-JIT和AOT AOT 编译是在程序运行之前将整个源代码或字节码文件一次性地编译成本地机器码。这意味着在程序运行时不需要再进行额外的编译工作，直接执行已经编译好的机器码。
-JIT 编译适用于对执行性能要求较高、灵活性要求较高的应用场景。例如，Java 虚拟机使用 JIT 编译器将热点代码即时编译成机器码，以提高程序的执行效率。JIT 编译还可以根据实际的执行情况进行优化，使得程序在后续的执行中获得更好的性能。
-实际上 JIT是解释型语言中，为了优化性能，在程序运行时，将热点代码进行编译机器码，从而不需要每次进行解释，这里实际开发过程中可以通过预热方式，提高程序运行性能，java HotSpot为例，其中存在c1 c2两个编译器，默认c2也就是server。
-</p>
-  </div>
-  <footer class="entry-footer"><span title='2024-10-06 00:00:00 +0000 UTC'>October 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to JIT和AOT" href="https://eightyoliveira.github.io/web/jit%E5%92%8Caot/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">Mybatis代理模式Demo
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>package com.fsms.mybtistest.proxy; import java.lang.reflect.InvocationHandler; import java.lang.reflect.Method; public class MapperProxy implements InvocationHandler { @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable { System.out.println(&#34;method: &#34; &#43; method.getName()&#43;&#34; execute&#34;); return new MapperMethod().execute(); } } class MapperMethod{ public Object execute(){ Object result = null; result = &#34;success&#34;; return result; } } package com.fsms.mybtistest.proxy; import java.lang.reflect.InvocationHandler; import java.lang.reflect.Method; public class MapperProxy implements InvocationHandler { @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable { System.out.println(&#34;method: &#34; &#43; method.getName()&#43;&#34; execute&#34;); return new MapperMethod().execute(); } } class MapperMethod{ public Object execute(){ Object result = null; result = &#34;success&#34;; return result; } } package com.fsms.mybtistest.proxy; import java.lang.reflect.Proxy; public class ProxyDemo { public static void main(String[] args) { MapperProxy handler = new MapperProxy(); HelloMapper helloMapper = (HelloMapper) Proxy.newProxyInstance( HelloMapper.class.getClassLoader(), new Class&lt;?&gt;[]{HelloMapper.class}, handler); System.out.println(helloMapper.sayHello()); } } </p>
-  </div>
-  <footer class="entry-footer"><span title='2024-09-27 00:00:00 +0000 UTC'>September 27, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Mybatis代理模式Demo" href="https://eightyoliveira.github.io/web/mybatis%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8Fdemo/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">IO篇上 (Linux I/O模型)
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>网络数据流向方式，以数据接收方来看，从网卡-&gt;内核-&gt;用户空间，数据经过两次复制（相关资料 零拷贝）
-1BIO #include &lt;stdio.h&gt; #include &lt;string.h&gt; #include &lt;arpa/inet.h&gt; #include &lt;sys/types.h&gt; #include &lt;sys/socket.h&gt; #define MAX_SIZE 512 #define PORT 10007 int main(void) { int sockfd; int sock_fd; int recvnum; int addrlen = sizeof(struct sockaddr); struct sockaddr_in my_addr; struct sockaddr addr; char buf[MAX_SIZE]; // 填充服务器端的数据，用于套接字绑定 bzero(&amp;my_addr, sizeof(struct sockaddr_in)); my_addr.sin_family = AF_INET; // 设置为IPV4 my_addr.sin_port = htons(PORT); // 将端口号主机序转换为网络序 my_addr.sin_addr.s_addr = inet_addr(&#34;127.0.0.1&#34;); // 创建套接字 sockfd = socket(AF_INET, SOCK_STREAM, 0); if (sockfd &lt; 0) { printf(&#34;create socket error!\n&#34;); return 0; } // 绑定套接字 if (bind(sockfd, (struct sockaddr *)&amp;my_addr, addrlen) &lt; 0) { printf(&#34;bind error!\n&#34;); return 0; } // 监听端口和ip，设置最大连接数为3 if (listen(sockfd, 3) &lt; 0) { printf(&#34;listen error!\n&#34;); return 0; } // 建立服务器端和客户端连接 sock_fd = accept(sockfd, &amp;addr, &amp;addrlen); // 建立连接后，产生新的套接字 if (sock_fd &lt; 0) { printf(&#34;accept error!\n&#34;); return 0; } // 接收数据 if ((recvnum = recv(sock_fd, (void *)buf, MAX_SIZE, 0)) &lt; 0) { printf(&#34;recv error!\n&#34;); return 0; } buf[recvnum] = &#39;\0&#39;; printf(&#34;recv from client: %s\n&#34;, buf); memset(buf, 0, MAX_SIZE); // 关闭连接 close(sockfd); close(sock_fd); return 0; } 单线程方式，从accept建立连接到recv发起系统调用之后，整个线程在事件完成之前会一直阻塞住。
-...</p>
-  </div>
-  <footer class="entry-footer"><span title='2024-09-14 00:00:00 +0000 UTC'>September 14, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to IO篇上 (Linux I/O模型)" href="https://eightyoliveira.github.io/web/io%E7%AF%87%E4%B8%8Alinuxi_o%E6%A8%A1%E5%9E%8B/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">IO篇下 (基于Linux64 OpenJDK8)
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>Java下NIO包是new io！！！
-1 传统阻塞模式 public static void main(String[] args) throws Exception { ByteBuffer buffer = ByteBuffer.allocate(32); ServerSocketChannel serverChannel = ServerSocketChannel.open(); serverChannel.configureBlocking(false); serverChannel.socket().bind(new InetSocketAddress(&#34;127.0.0.1&#34;, 8080)); SocketChannel sc = serverChannel.accept(); sc.read(buffer); System.out.println(&#34;connected... &#34;&#43;sc); } 全程阻塞住，从accept到read，单线程，略。
-2 非阻塞模式 重点:serverSocketChannel.configureBlocking(false);
-public static void main(String[] args) throws Exception { ByteBuffer buffer = ByteBuffer.allocate(16); ServerSocketChannel ssc = ServerSocketChannel.open(); ssc.configureBlocking(false); ssc.bind(new InetSocketAddress(8080)); List&lt;SocketChannel&gt; channels = new ArrayList&lt;&gt;(); while (true) { SocketChannel sc = ssc.accept(); if (sc != null) { System.out.println(&#34;connected... &#34;&#43;sc); sc.configureBlocking(false); // 非阻塞模式 channels.add(sc); } for (SocketChannel channel : channels) { int read = channel.read(buffer); if (read &gt; 0) { buffer.flip(); buffer.clear(); System.out.println(&#34;after read...&#34;&#43;channel); } } } } 重点分析，首先其他不变，不使用selector，直接serverSocketChannel.configureBlocking(false);这种模式调用关系，关键包sun.nio.ch.ServerSocketChannelImpl.accept()方法
-...</p>
-  </div>
-  <footer class="entry-footer"><span title='2024-09-14 00:00:00 +0000 UTC'>September 14, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to IO篇下 (基于Linux64 OpenJDK8)" href="https://eightyoliveira.github.io/web/io%E7%AF%87%E4%B8%8B%E5%9F%BA%E4%BA%8Elinux64openjdk8/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>0 虚拟机配置 RockyLinux9.4 64 mini 2*2 4G
-JDK1.8(其他版本加jvm参数)
-RocketMQ 5.3
-RockyLinux1 192.164.64.134 m1 n2 n1 p1
-RockyLinux2 192.164.64.135 m2 n1 n2 p2
-nat模式下，手动改虚拟机网关ip，然后手动配置vmnet的ip和网关
-vi /etc/NetworkManager/system-connections/ens160.nmconnection [ipv4] method=manual address1=192.168. 64.134/24,192.168.64.151 dns=114.114.114.114;8.8.8.8 #刷新 nmcli d r ens160 nmcli c r ens160 # 关闭防火墙，所有端口全开 systemctl stop firewalld systemctl disable firewalld 1 配置环境变量 vi /etc/profile export JAVA_HOME=/usr/local/jdk1.8.0_421 ROCKETMQ_HOME=/usr/local/rocketmq-all-5.3.0-bin-release PATH=$PATH:$ROCKETMQ_HOME/bin:$JAVA_HOME/bin export PATH source /etc/profile 2配置broke文件 RockyLinux1配置
-vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
-#所属集群名字 brokerClusterName=rocketmq-cluster #broker名字，注意此处不同的配置文件填写的不一样 brokerName=broker-a #0 表示 Master，&gt;0 表示 Slave brokerId=0 #nameServer地址，分号分割 namesrvAddr=192.168.64.134:9876;192.168.64.135:9876 #在发送消息时，自动创建服务器不存在的topic，默认创建的队列数 defaultTopicQueueNums=4 #是否允许 Broker 自动创建Topic，建议线下开启，线上关闭 autoCreateTopicEnable=true #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭 autoCreateSubscriptionGroup=true #Broker 对外服务的监听端口 listenPort=10911 #删除文件时间点，默认凌晨 4点 deleteWhen=04 #文件保留时间，默认 48 小时 fileReservedTime=120 #commitLog每个文件的大小默认1G mapedFileSizeCommitLog=1073741824 #ConsumeQueue每个文件默认存30W条，根据业务情况调整 mapedFileSizeConsumeQueue=300000 #destroyMapedFileIntervalForcibly=120000 #redeleteHangedFileInterval=120000 #检测物理文件磁盘空间 diskMaxUsedSpaceRatio=88 #存储路径 storePathRootDir=/usr/local/rocketmq/store #commitLog 存储路径 storePathCommitLog=/usr/local/rocketmq/store/commitlog #消费队列存储路径存储路径 storePathConsumeQueue=/usr/local/rocketmq/store/consumequeue #消息索引存储路径 storePathIndex=/usr/local/rocketmq/store/index #checkpoint 文件存储路径 storeCheckpoint=/usr/local/rocketmq/store/checkpoint #abort 文件存储路径 abortFile=/usr/local/rocketmq/store/abort #限制的消息大小 maxMessageSize=65536 #flushCommitLogLeastPages=4 #flushConsumeQueueLeastPages=2 #flushCommitLogThoroughInterval=10000 #flushConsumeQueueThoroughInterval=60000 #Broker 的角色 #- ASYNC_MASTER 异步复制Master #- SYNC_MASTER 同步双写Master #- SLAVE brokerRole=SYNC_MASTER #刷盘方式 #- ASYNC_FLUSH 异步刷盘 #- SYNC_FLUSH 同步刷盘 flushDiskType=SYNC_FLUSH #checkTransactionMessageEnable=false #发消息线程池数量 #sendMessageThreadPoolNums=128 #拉消息线程池数量 #pullMessageThreadPoolNums=128 vi /usr/local/rocketmq/conf/2m-2s-async/broker-b-s.properties
-...</p>
-  </div>
-  <footer class="entry-footer"><span title='2024-09-09 00:00:00 +0000 UTC'>September 9, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to rocketmq cluster 搭建配置记录（sync-2m-2s-2namesrv-2proyx）" href="https://eightyoliveira.github.io/web/rocketmqcluster%E6%90%AD%E5%BB%BA%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95sync-2m-2s-2namesrv-2proyx/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">分布式事务解决方案
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p></p>
-  </div>
-  <footer class="entry-footer"><span title='2024-09-06 00:00:00 +0000 UTC'>September 6, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to 分布式事务解决方案" href="https://eightyoliveira.github.io/web/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/"></a>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">多线程事务解决
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p></p>
-  </div>
-  <footer class="entry-footer"><span title='2024-08-07 00:00:00 +0000 UTC'>August 7, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to 多线程事务解决" href="https://eightyoliveira.github.io/web/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%BA%8B%E5%8A%A1%E8%A7%A3%E5%86%B3/"></a>
-</article>
 
 <article class="post-entry"> 
   <header class="entry-header">
@@ -281,7 +169,9 @@ vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
     </h2>
   </header>
   <div class="entry-content">
-    <p></p>
+    <p>1 问题描述 在使用 MyBatis 进行数据库查询时，当主表与子表存在一对多关系，并通过 &lt;collection&gt; 标签进行嵌套映射时，出现问题。
+2 问题原因 一对多查询中，MyBatis 使用 LEFT JOIN 或 INNER JOIN 关联子表。 一条主表记录可能对应 N 条子表记录，导致 SQL 查询结果行数 &gt; 主表记录数。 分页插件在执行 SQL 前，拦截并生成 COUNT 查询和 LIMIT 查询，COUNT 查询统计的是JOIN 后的结果行数，而非主表记录数。 3 完美解决方案 无
+</p>
   </div>
   <footer class="entry-footer"><span title='2024-08-06 00:00:00 +0000 UTC'>August 6, 2024</span></footer>
   <a class="entry-link" aria-label="post link to Mybatis一对多collection映射导致分页失败" href="https://eightyoliveira.github.io/web/mybatis%E4%B8%80%E5%AF%B9%E5%A4%9Acollection%E6%98%A0%E5%B0%84%E5%AF%BC%E8%87%B4%E5%88%86%E9%A1%B5%E5%A4%B1%E8%B4%A5/"></a>
@@ -293,7 +183,9 @@ vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
     </h2>
   </header>
   <div class="entry-content">
-    <p>public static void main(String[] args) { Map&lt;String,Object&gt; map = new HashMap&lt;String,Object&gt;(); map.put(&#34;1&#34;, 1); String result = (String)map.get(&#34;1&#34;); } </p>
+    <p>1 问题描述 修复bug过程中，看到如下写法：
+public static void main(String[] args) { Map&lt;String, Object&gt; map = new HashMap&lt;String, Object&gt;(); map.put(&#34;1&#34;, 1); String result = (String) map.get(&#34;1&#34;); } 异常信息：
+Exception in thread &#34;main&#34; java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.String 2 原因分析 存入的是 Integer 类型：map.put(&#34;1&#34;, 1) 中的 1 是 int 基本类型，自动装箱为 Integer 对象存入 Map。 取出后强制转换：map.get(&#34;1&#34;) 返回的是 Integer 类型的对象，将其强制转换为 String 会导致类型转换异常。 泛型擦除的澄清：虽然 Java 泛型在运行时会被擦除（Map&lt;String, Object&gt; 变成原始类型 Map），但本例的问题并非由泛型擦除直接导致。真正原因是对象的实际类型与强制转换的目标类型不匹配。 3 解决方案 方案一：使用正确的接收类型 Integer result = (Integer) map.get(&#34;1&#34;); 方案二：存入时即为 String 类型 map.put(&#34;1&#34;, &#34;1&#34;); // 存入字符串 &#34;1&#34; String result = (String) map.get(&#34;1&#34;); </p>
   </div>
   <footer class="entry-footer"><span title='2024-08-06 00:00:00 +0000 UTC'>August 6, 2024</span></footer>
   <a class="entry-link" aria-label="post link to 泛型擦除异常" href="https://eightyoliveira.github.io/web/%E6%B3%9B%E5%9E%8B%E6%93%A6%E9%99%A4%E5%BC%82%E5%B8%B8/"></a>
@@ -308,7 +200,7 @@ vi /usr/local/rocketmq/conf/2m-2s-sync/broker-a.properties
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">我的博客</a></span> · 
+        <span>&copy; 2025 <a href="https://eightyoliveira.github.io/">Home</a></span> · 
 
     <span>
         Powered by
