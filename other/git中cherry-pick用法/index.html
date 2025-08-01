@@ -239,8 +239,8 @@ features 分支本身没有改变，仍然包含 d 和 e 提交。
   </header> 
   <div class="post-content"><h1 id="1-介绍">1 介绍<a hidden class="anchor" aria-hidden="true" href="#1-介绍">#</a></h1>
 <p>目的是将 <code>features</code> (d e提交)分支中的某个特定提交（比如提交 <code>d</code>）合并到 <code>master</code> 分支，而另一个提交（比如提交 <code>e</code>）不合并。</p>
-<p><img alt="master分支" loading="lazy" src="img/1.png">
-<img alt="features分支" loading="lazy" src="img/2.png"></p>
+<p><img alt="master分支" loading="lazy" src="/img/1.png">
+<img alt="features分支" loading="lazy" src="/img/2.png"></p>
 <h1 id="2-操作步骤总结">2 操作步骤总结：<a hidden class="anchor" aria-hidden="true" href="#2-操作步骤总结">#</a></h1>
 <p>执行了以下 Git 命令：</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-plain" data-lang="plain"><span style="display:flex;"><span>git checkout master         # 切换到 master 分支
@@ -252,7 +252,7 @@ features 分支本身没有改变，仍然包含 d 和 e 提交。
 <li><code>commit-e</code> 不会被合并到 <code>master</code>，除非你再次执行 cherry-pick 或 merge。</li>
 <li><code>features</code> 分支本身没有改变，仍然包含 <code>d</code> 和 <code>e</code> 提交。</li>
 </ul>
-<p><img alt="master分支" loading="lazy" src="img/3.png"></p>
+<p><img alt="master分支" loading="lazy" src="/img/3.png"></p>
 
 
   </div>

@@ -139,8 +139,8 @@ Git 存储的所有提交历史记录，HEAD 指向当前所在的提交。&lt;/
       <guid>https://eightyoliveira.github.io/other/git%E4%B8%ADcherry-pick%E7%94%A8%E6%B3%95/</guid>
       <description>&lt;h1 id=&#34;1-介绍&#34;&gt;1 介绍&lt;/h1&gt;
 &lt;p&gt;目的是将 &lt;code&gt;features&lt;/code&gt; (d e提交)分支中的某个特定提交（比如提交 &lt;code&gt;d&lt;/code&gt;）合并到 &lt;code&gt;master&lt;/code&gt; 分支，而另一个提交（比如提交 &lt;code&gt;e&lt;/code&gt;）不合并。&lt;/p&gt;
-&lt;p&gt;&lt;img alt=&#34;master分支&#34; loading=&#34;lazy&#34; src=&#34;img/1.png&#34;&gt;
-&lt;img alt=&#34;features分支&#34; loading=&#34;lazy&#34; src=&#34;img/2.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt=&#34;master分支&#34; loading=&#34;lazy&#34; src=&#34;https://eightyoliveira.github.io/img/1.png&#34;&gt;
+&lt;img alt=&#34;features分支&#34; loading=&#34;lazy&#34; src=&#34;https://eightyoliveira.github.io/img/2.png&#34;&gt;&lt;/p&gt;
 &lt;h1 id=&#34;2-操作步骤总结&#34;&gt;2 操作步骤总结：&lt;/h1&gt;
 &lt;p&gt;执行了以下 Git 命令：&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-plain&#34; data-lang=&#34;plain&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;git checkout master         # 切换到 master 分支
@@ -152,7 +152,7 @@ Git 存储的所有提交历史记录，HEAD 指向当前所在的提交。&lt;/
 &lt;li&gt;&lt;code&gt;commit-e&lt;/code&gt; 不会被合并到 &lt;code&gt;master&lt;/code&gt;，除非你再次执行 cherry-pick 或 merge。&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;features&lt;/code&gt; 分支本身没有改变，仍然包含 &lt;code&gt;d&lt;/code&gt; 和 &lt;code&gt;e&lt;/code&gt; 提交。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img alt=&#34;master分支&#34; loading=&#34;lazy&#34; src=&#34;img/3.png&#34;&gt;&lt;/p&gt;</description>
+&lt;p&gt;&lt;img alt=&#34;master分支&#34; loading=&#34;lazy&#34; src=&#34;https://eightyoliveira.github.io/img/3.png&#34;&gt;&lt;/p&gt;</description>
     </item>
     <item>
       <title>Git中stage和Git中stash和IDEA的Shelve对比</title>
@@ -300,7 +300,7 @@ TCP 的紧急方式是发送端向另一端发送紧急数据的一种方式。&
 &lt;li&gt;有效数据部分 (Data)：这部分也不是必须的，比如在建立和关闭 TCP 连接的阶段，双方交换的报文段就只包含 TCP 首部。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h1 id=&#34;4-请求分析&#34;&gt;4 请求分析&lt;/h1&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;img/img_14.png&#34;&gt;&lt;/p&gt;</description>
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://eightyoliveira.github.io/img/img_14.png&#34;&gt;&lt;/p&gt;</description>
     </item>
     <item>
       <title>C线程同步机制</title>
@@ -363,7 +363,7 @@ TCP 的紧急方式是发送端向另一端发送紧急数据的一种方式。&
       <guid>https://eightyoliveira.github.io/other/io%E7%AF%87%E4%B8%8Alinuxi_o%E6%A8%A1%E5%9E%8B/</guid>
       <description>&lt;p&gt;网络数据流向方式，以数据接收方来看，从网卡-&amp;gt;内核-&amp;gt;用户空间，数据经过两次复制（相关资料 零拷贝）&lt;/p&gt;
 &lt;h1 id=&#34;1bio&#34;&gt;1BIO&lt;/h1&gt;
-&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;img/img.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#34;https://eightyoliveira.github.io/img/img.png&#34;&gt;&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;arpa/inet.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
